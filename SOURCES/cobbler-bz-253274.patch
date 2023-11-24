@@ -1,0 +1,92 @@
+From 51f0baf6c7e6ef042ce6fa7543b37b0d2d723ae0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Miroslav=20Such=C3=BD?= <msuchy@redhat.com>
+Date: Fri, 23 Sep 2011 13:56:07 +0200
+Subject: [PATCH] if hostname is not resolvable do not fail and use that
+ hostname
+
+in commit 588756aa7aefc122310847d007becf3112647944 cobbler start using IP address in kickstart path due s390x
+but in BZ 253274 we have example where hostname is not resolvable from the location where cobbler run.
+But it is resolvable from location where client runs.
+So if cobbler is unable to resolve hostname, do not fail and revert to behaviour prior 588756aa7aefc122310847d007becf3112647944.
+
+Addressing:
+Fri Sep 23 04:51:12 2011 - INFO | Exception occured: <class 'socket.gaierror'>
+Fri Sep 23 04:51:12 2011 - INFO | Exception value: [Errno -2] Name or service
+not known
+Fri Sep 23 04:51:12 2011 - INFO | Exception Info:
+  File "/usr/lib/python2.6/site-packages/cobbler/remote.py", line 1759, in
+_dispatch
+    return method_handle(*params)
+   File "/usr/lib/python2.6/site-packages/cobbler/remote.py", line 874, in
+save_system
+    return self.save_item("system",object_id,token,editmode=editmode)
+   File "/usr/lib/python2.6/site-packages/cobbler/remote.py", line 866, in
+save_item
+    rc = self.api.add_item(what,obj)
+   File "/usr/lib/python2.6/site-packages/cobbler/api.py", line 394, in
+add_item
+    return
+self.get_items(what).add(ref,check_for_duplicate_names=check_for_duplicate_names,save=save,logger=logger)
+   File "/usr/lib/python2.6/site-packages/cobbler/collection.py", line 284, in
+add
+    self.lite_sync.add_single_system(ref.name)
+   File "/usr/lib/python2.6/site-packages/cobbler/action_litesync.py", line
+142, in add_single_system
+    self.sync.pxegen.write_all_system_files(system)
+   File "/usr/lib/python2.6/site-packages/cobbler/pxegen.py", line 295, in
+write_all_system_files
+    self.write_pxe_file(f2,system,profile,distro,working_arch)
+   File "/usr/lib/python2.6/site-packages/cobbler/pxegen.py", line 566, in
+write_pxe_file
+    ipaddress = socket.gethostbyname_ex(blended["http_server"])[2][0]
+---
+ cobbler/pxegen.py |   19 ++++++++++++++-----
+ 1 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/cobbler/pxegen.py b/cobbler/pxegen.py
+index 889f363..32c8f01 100644
+--- a/cobbler/pxegen.py
++++ b/cobbler/pxegen.py
+@@ -209,8 +209,11 @@ class PXEGen:
+             blended = utils.blender(self.api, True, system)
+             self.templar.render(template_cf, blended, cf)
+             # FIXME: profiles also need this data!
+-            # FIXME: the _conf and _parm files are limited to 80 characters in length 
+-            ipaddress = socket.gethostbyname_ex(blended["http_server"])[2][0]
++            # FIXME: the _conf and _parm files are limited to 80 characters in length
++            try: 
++                ipaddress = socket.gethostbyname_ex(blended["http_server"])[2][0]
++            except socket.gaierror:
++                ipaddress = blended["http_server"]
+             kickstart_path = "http://%s/cblr/svc/op/ks/system/%s" % (ipaddress, system.name)
+             # gather default kernel_options and default kernel_options_s390x
+             kopts = blended.get("kernel_options","")
+@@ -321,8 +324,11 @@ class PXEGen:
+                 blended = utils.blender(self.api, True, profile)
+                 self.templar.render(template_cf, blended, cf)
+                 # FIXME: profiles also need this data!
+-                # FIXME: the _conf and _parm files are limited to 80 characters in length 
+-                ipaddress = socket.gethostbyname_ex(blended["http_server"])[2][0]
++                # FIXME: the _conf and _parm files are limited to 80 characters in length
++                try: 
++                    ipaddress = socket.gethostbyname_ex(blended["http_server"])[2][0]
++                except socket.gaierror:
++                    ipaddress = blended["http_server"]
+                 kickstart_path = "http://%s/cblr/svc/op/ks/profile/%s" % (ipaddress, profile.name)
+                 # gather default kernel_options and default kernel_options_s390x
+                 kopts = blended.get("kernel_options","")
+@@ -666,7 +672,10 @@ class PXEGen:
+ 
+             # FIXME: need to make shorter rewrite rules for these URLs
+ 
+-            ipaddress = socket.gethostbyname_ex(blended["http_server"])[2][0]
++            try:
++                ipaddress = socket.gethostbyname_ex(blended["http_server"])[2][0]
++            except socket.gaierror:
++                ipaddress = blended["http_server"]
+             if system is not None and kickstart_path.startswith("/"):
+                 kickstart_path = "http://%s/cblr/svc/op/ks/system/%s" % (ipaddress, system.name)
+             elif kickstart_path.startswith("/"):
+-- 
+1.7.6.2
+

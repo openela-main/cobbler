@@ -1,0 +1,25 @@
+From cd2fc155f84655ca689e33cc176fc2d9ab08c936 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:37:38 +0100
+Subject: [PATCH 12/17] make sure list is returned
+
+---
+ koan/utils.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/koan/utils.py b/koan/utils.py
+index 28c8af1..e202bd5 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -364,7 +364,7 @@ def uniqify(lst, purge=None):
+          if x != purge:
+             temp2[x] = 1
+       temp = temp2
+-   return temp.keys()
++   return list(temp.keys())
+ 
+ def get_network_info():
+    try:
+-- 
+2.5.5
+

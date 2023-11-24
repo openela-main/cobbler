@@ -1,0 +1,99 @@
+From 8d1dbdc5e56b32ad1d6493904d30e85aa3b5fa2b Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 10:47:30 +0100
+Subject: [PATCH 01/17] exceptions module doesn't have to be imported
+
+---
+ koan/app.py       | 3 +--
+ koan/register.py  | 3 +--
+ koan/utils.py     | 3 +--
+ koan/vmwcreate.py | 3 +--
+ 4 files changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/koan/app.py b/koan/app.py
+index e0b2d66..d911dad 100755
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -49,7 +49,6 @@ except:
+     True = 1
+     False = 0
+ 
+-import exceptions
+ import time
+ import shutil
+ import errno
+@@ -252,7 +251,7 @@ def main():
+ 
+ #=======================================================
+ 
+-class InfoException(exceptions.Exception):
++class InfoException(Exception):
+     """
+     Custom exception for tracking of fatal errors.
+     """
+diff --git a/koan/register.py b/koan/register.py
+index 0d30c7b..9924d85 100755
+--- a/koan/register.py
++++ b/koan/register.py
+@@ -27,7 +27,6 @@ try:
+     from optparse import OptionParser
+ except:
+     from opt_parse import OptionParser  # importing this for backwards compat with 2.2
+-import exceptions
+ try:
+     import subprocess as sub_process
+ except:
+@@ -100,7 +99,7 @@ def main():
+ 
+ #=======================================================
+ 
+-class InfoException(exceptions.Exception):
++class InfoException(Exception):
+     """
+     Custom exception for tracking of fatal errors.
+     """
+diff --git a/koan/utils.py b/koan/utils.py
+index 7fcc12d..475bcd0 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -25,7 +25,6 @@ import random
+ import os
+ import traceback
+ import tempfile
+-import exceptions
+ ANCIENT_PYTHON = 0
+ try:
+     try:
+@@ -59,7 +58,7 @@ VIRT_STATE_NAME_MAP = {
+    6 : "crashed"
+ }
+ 
+-class InfoException(exceptions.Exception):
++class InfoException(Exception):
+     """
+     Custom exception for tracking of fatal errors.
+     """
+diff --git a/koan/vmwcreate.py b/koan/vmwcreate.py
+index f5603d8..1bde891 100755
+--- a/koan/vmwcreate.py
++++ b/koan/vmwcreate.py
+@@ -25,7 +25,6 @@ import os, sys, time, stat
+ import tempfile
+ import random
+ from optparse import OptionParser
+-import exceptions
+ import errno
+ import re
+ import virtinst
+@@ -64,7 +63,7 @@ memsize = "%(MEMORY)s"
+ """
+ #ide1:0.filename = "%(PATH_TO_ISO)s"
+ 
+-class VirtCreateException(exceptions.Exception):
++class VirtCreateException(Exception):
+     pass
+ 
+ def random_mac():
+-- 
+2.5.5
+

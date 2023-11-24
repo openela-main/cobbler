@@ -1,0 +1,31 @@
+--- a/koan/app.py	2018-11-12 05:28:52.566167929 -0500
++++ b/koan/app.py	2018-11-12 05:32:12.017191022 -0500
+@@ -614,7 +614,7 @@ class Koan:
+             nfs_parser.add_option("--server", dest="server")
+ 
+             for line in lines:
+-                match = method_re.match(line)
++                match = method_re.match(line.decode('utf-8'))
+                 if match:
+                     cmd = match.group("urlcmd")
+                     if cmd:
+--- a/koan/virtinstall.py 2018-11-12 05:32:23.803251480 -0500
++++ b/koan/virtinstall.py      2018-11-12 05:32:54.193407368 -0500
+@@ -65,7 +65,7 @@ except:
+     try:
+         rc, response = subprocess_get_response(
+                 shlex.split('virt-install --os-variant list'))
+-        variants = response.split('\n')
++        variants = response.decode('utf-8').split('\n')
+         for variant in variants:
+             supported_variants.add(variant.split()[0])
+     except:
+@@ -73,7 +73,7 @@ except:
+             # maybe on newer os using osinfo-query?
+             rc, response = utils.subprocess_get_response(
+                     shlex.split('osinfo-query os'))
+-            variants = response.split('\n')
++            variants = response.decode('utf-8').split('\n')
+             for variant in variants:
+                 supported_variants.add(variant.split()[0])
+         except:

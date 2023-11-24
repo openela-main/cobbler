@@ -1,0 +1,51 @@
+--- ./koan/app.py	2011-08-24 11:54:37.985552147 +0200
++++ ./koan/app.py	2011-08-24 11:55:39.448880750 +0200
+@@ -742,19 +742,19 @@ class Koan:
+ 
+             # Validate kernel argument length (limit depends on architecture --
+             # see asm-*/setup.h).  For example:
+-            #   asm-i386/setup.h:#define COMMAND_LINE_SIZE 256
++            #   asm-i386/setup.h:#define COMMAND_LINE_SIZE 2048
+             #   asm-ia64/setup.h:#define COMMAND_LINE_SIZE  512
+             #   asm-powerpc/setup.h:#define COMMAND_LINE_SIZE   512
+             #   asm-s390/setup.h:#define COMMAND_LINE_SIZE  896
+-            #   asm-x86_64/setup.h:#define COMMAND_LINE_SIZE    256
++            #   asm-x86_64/setup.h:#define COMMAND_LINE_SIZE    2048
+             if arch.startswith("ppc") or arch.startswith("ia64"):
+                 if len(k_args) > 511:
+                     raise InfoException, "Kernel options are too long, 512 chars exceeded: %s" % k_args
+             elif arch.startswith("s390"):
+                 if len(k_args) > 895:
+                     raise InfoException, "Kernel options are too long, 896 chars exceeded: %s" % k_args
+-            elif len(k_args) > 255:
+-                raise InfoException, "Kernel options are too long, 255 chars exceeded: %s" % k_args
++            elif len(k_args) > 2047:
++                raise InfoException, "Kernel options are too long, 2047 chars exceeded: %s" % k_args
+ 
+             utils.subprocess_call([
+                 'kexec',
+@@ -829,11 +829,11 @@ class Koan:
+ 
+             # Validate kernel argument length (limit depends on architecture --
+             # see asm-*/setup.h).  For example:
+-            #   asm-i386/setup.h:#define COMMAND_LINE_SIZE 256
++            #   asm-i386/setup.h:#define COMMAND_LINE_SIZE 2048
+             #   asm-ia64/setup.h:#define COMMAND_LINE_SIZE  512
+             #   asm-powerpc/setup.h:#define COMMAND_LINE_SIZE   512
+             #   asm-s390/setup.h:#define COMMAND_LINE_SIZE  896
+-            #   asm-x86_64/setup.h:#define COMMAND_LINE_SIZE    256
++            #   asm-x86_64/setup.h:#define COMMAND_LINE_SIZE    2048
+             if not ANCIENT_PYTHON:
+                 if arch.startswith("ppc") or arch.startswith("ia64"):
+                     if len(k_args) > 511:
+@@ -841,8 +841,8 @@ class Koan:
+                 elif arch.startswith("s390"):
+                     if len(k_args) > 895:
+                         raise InfoException, "Kernel options are too long, 896 chars exceeded: %s" % k_args
+-                elif len(k_args) > 255:
+-                    raise InfoException, "Kernel options are too long, 255 chars exceeded: %s" % k_args
++                elif len(k_args) > 2047:
++                    raise InfoException, "Kernel options are too long, 2047 chars exceeded: %s" % k_args
+ 
+             cmd = [ "/sbin/grubby",
+                     "--add-kernel", self.safe_load(profile_data,'kernel_local'),

@@ -1,0 +1,14 @@
+--- ./snippets/keep_ssh_host_keys	2010-07-28 17:48:48.000000000 +0200
++++ ./snippets/keep_ssh_host_keys	2011-08-18 13:56:47.083867519 +0200
+@@ -89,10 +89,9 @@ if [ "$keys_found" = "yes" ]; then
+         sleep 10
+         if [ -d /mnt/sysimage$SEARCHDIR ] ; then
+             cp -af /tmp/$TEMPDIR/${PATTERN}* /mnt/sysimage$SEARCHDIR
+-            logger "keys copied to newly installed system"
+             break
+         fi
+-    done &
++    done >/dev/null 2>/dev/null &
+ fi
+ #end raw
+ 

@@ -1,0 +1,23 @@
+diff -rupN cobbler-2.0.7-old/koan/app.py cobbler-2.0.7-new/koan/app.py
+--- cobbler-2.0.7-old/koan/app.py	2014-03-18 13:53:31.916116417 -0400
++++ cobbler-2.0.7-new/koan/app.py	2014-03-18 13:56:36.590423095 -0400
+@@ -875,14 +875,17 @@ class Koan:
+             # Are we running on ppc?
+             if not ANCIENT_PYTHON:
+                if arch.startswith("ppc"):
+-                   cmd.append("--yaboot")
++                   if "grub2" in probe_output:
++                       cmd.append("--grub2")
++                   else:
++                       cmd.append("--yaboot")
+                elif arch.startswith("s390"):
+                    cmd.append("--zipl")
+ 
+             utils.subprocess_call(cmd)
+ 
+             # Any post-grubby processing required (e.g. ybin, zipl, lilo)?
+-            if not ANCIENT_PYTHON and arch.startswith("ppc"):
++            if not ANCIENT_PYTHON and arch.startswith("ppc") and "grub2" not in probe_output:
+                 # FIXME - CHRP hardware uses a 'PPC PReP Boot' partition and doesn't require running ybin
+                 print "- applying ybin changes"
+                 cmd = [ "/sbin/ybin" ]

@@ -1,0 +1,13 @@
+diff -rupN cobbler-old/snippets/post_install_network_config cobbler-new/snippets/post_install_network_config
+--- cobbler-old/snippets/post_install_network_config	2012-08-24 15:20:57.543943513 -0400
++++ cobbler-new/snippets/post_install_network_config	2012-08-24 15:28:14.298918151 -0400
+@@ -41,7 +41,9 @@
+     ## =============================================================================
+     #set $i = 0
+     ## setup bonding if we have to
++    ## if using bonding, must have an /ect/modpobe.conf file
+     #if $numbondingdevs > 0
++touch "/etc/modprobe.conf"
+ if [ -f "/etc/modprobe.conf" ]; then
+     echo "options bonding max_bonds=$numbondingdevs" >> /etc/modprobe.conf
+ fi 

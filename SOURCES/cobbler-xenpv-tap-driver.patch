@@ -1,0 +1,50 @@
+--- ./koan/xencreate.py	2010-07-28 17:48:48.000000000 +0200
++++ ./koan/xencreate.py	2011-01-06 23:04:33.000000000 +0100
+@@ -36,11 +36,16 @@ import virtinst
+ import app as koan
+ 
+ try:
+-    import virtinst.DistroManager as DistroManager
+-except:
+-    # older virtinst, this is probably ok
+-    # but we know we can't do Xen fullvirt installs
+-    pass
++    from virtinst.DistroManager import PXEInstaller
++    pxe_installer = PXEInstaller()
++except ImportError:
++    try:
++        from virtinst import PXEInstaller
++        pxe_installer = PXEInstaller(os_type='hvm')
++    except:
++        # older virtinst, this is probably ok
++        # but we know we can't do Xen fullvirt installs
++        pass
+ import traceback
+ 
+ def random_mac():
+@@ -77,7 +82,7 @@ def start_install(name=None,
+ 
+     if fullvirt:
+         # FIXME: add error handling here to explain when it's not supported
+-        guest = virtinst.FullVirtGuest(installer=DistroManager.PXEInstaller())
++        guest = virtinst.FullVirtGuest(installer=pxe_installer)
+     else:
+         guest = virtinst.ParaVirtGuest()
+ 
+@@ -123,7 +128,15 @@ def start_install(name=None,
+ 
+     for d in disks:
+         if d[1] != 0 or d[0].startswith("/dev"):
+-            guest.disks.append(virtinst.XenDisk(d[0], size=d[1]))
++            virtdisk = virtinst.XenDisk(d[0], size=d[1])
++
++            # Set driver_name to tap for Xen PV guests
++            if guest.installer and guest.installer.os_type in ('xen', 'linux'):
++                if virtdisk.type == virtinst.XenDisk.TYPE_FILE and \
++                   virtinst._util.is_blktap_capable():
++                    virtdisk.driver_name = virtinst.XenDisk.DRIVER_TAP
++
++            guest.disks.append(virtdisk)
+         else:
+             raise koan.InfoException("this virtualization type does not work without a disk image, set virt-size in Cobbler to non-zero")
+ 

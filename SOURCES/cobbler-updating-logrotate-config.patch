@@ -1,0 +1,27 @@
+From 33b5fbd7ac2071aa5108c31b468504d8c9916ef8 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Tue, 31 Oct 2017 11:07:14 +0100
+Subject: [PATCH] 1314379 - updating logrotate config to cobbler 2.8 state
+
+---
+ config/cobblerd_rotate | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/config/cobblerd_rotate b/config/cobblerd_rotate
+index 1a1fb2f..b529355 100644
+--- a/config/cobblerd_rotate
++++ b/config/cobblerd_rotate
+@@ -4,9 +4,7 @@
+    rotate 4
+    weekly
+    postrotate
+-      if [ -f /var/lock/subsys/cobblerd ]; then
+-         /etc/init.d/cobblerd condrestart > /dev/null
+-      fi
++      /sbin/service cobblerd condrestart > /dev/null 2>&1
+    endscript
+ }
+ 
+-- 
+2.5.5
+

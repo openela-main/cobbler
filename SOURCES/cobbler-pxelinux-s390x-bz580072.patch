@@ -1,0 +1,14 @@
+--- ./cobbler/pxegen.py.orig	2010-07-28 17:48:48.000000000 +0200
++++ ./cobbler/pxegen.py	2010-11-24 10:48:30.000000000 +0100
+@@ -91,8 +91,9 @@
+                 utils.copyfile_pattern('/usr/share/syslinux/menu.c32', dst, api=self.api, logger=self.logger)
+ 
+         except:
+-            utils.copyfile_pattern('/usr/lib/syslinux/pxelinux.0',   dst, api=self.api, logger=self.logger)
+-            utils.copyfile_pattern('/usr/lib/syslinux/menu.c32',   dst, api=self.api, logger=self.logger)
++            if os.path.exists('/usr/lib/syslinux'):
++                utils.copyfile_pattern('/usr/lib/syslinux/pxelinux.0',   dst, api=self.api, logger=self.logger)
++                utils.copyfile_pattern('/usr/lib/syslinux/menu.c32',   dst, api=self.api, logger=self.logger)
+  
+         # copy memtest only if we find it
+         utils.copyfile_pattern('/boot/memtest*', dst, require_match=False, api=self.api, logger=self.logger)

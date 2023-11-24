@@ -1,0 +1,11 @@
+--- cobbler/action_sync.py	2011-05-27 16:05:40.000000000 +0200
++++ cobbler/action_sync.py	2011-05-27 16:05:53.000000000 +0200
+@@ -182,7 +182,7 @@
+                 if not x.endswith(".py"):
+                     utils.rmfile(path,logger=self.logger)
+             if os.path.isdir(path):
+-                if not x in ["aux", "web", "webui", "localmirror","repo_mirror","ks_mirror","images","links","repo_profile","repo_system","svc","rendered",".link_cache"] :
++                if not x in ["aux", "web", "webui", "localmirror","repo_mirror","ks_mirror","images","links","repo_profile","repo_system","svc","rendered",".link_cache", "pub"] :
+                     # delete directories that shouldn't exist
+                     utils.rmtree(path,logger=self.logger)
+                 if x in ["kickstarts","kickstarts_sys","images","systems","distros","profiles","repo_profile","repo_system","rendered"]:

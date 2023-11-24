@@ -1,0 +1,141 @@
+diff -rupN cobbler-2.0.7-orig/cobbler/collection_distros.py cobbler-2.0.7/cobbler/collection_distros.py
+--- cobbler-2.0.7-orig/cobbler/collection_distros.py	2013-10-21 14:11:29.327459462 -0400
++++ cobbler-2.0.7/cobbler/collection_distros.py	2013-10-22 08:22:48.727270516 -0400
+@@ -68,7 +68,11 @@ class Distros(collection.Collection):
+                 if with_sync:
+                     lite_sync = action_litesync.BootLiteSync(self.config, logger=logger)
+                     lite_sync.remove_single_distro(name)
+-            del self.listing[name]
++            self.lock.acquire()
++            try:
++                del self.listing[name]
++            finally:
++                self.lock.release()
+ 
+             self.config.serialize_delete(self, obj)
+ 
+diff -rupN cobbler-2.0.7-orig/cobbler/collection_images.py cobbler-2.0.7/cobbler/collection_images.py
+--- cobbler-2.0.7-orig/cobbler/collection_images.py	2013-10-21 14:11:29.327459462 -0400
++++ cobbler-2.0.7/cobbler/collection_images.py	2013-10-22 08:23:16.008462783 -0400
+@@ -65,7 +65,11 @@ class Images(collection.Collection):
+                     lite_sync = action_litesync.BootLiteSync(self.config, logger=logger)
+                     lite_sync.remove_single_image(name)
+ 
+-            del self.listing[name]
++            self.lock.acquire()
++            try:
++                del self.listing[name]
++            finally:
++                self.lock.release()
+             self.config.serialize_delete(self, obj)
+ 
+             if with_delete:
+diff -rupN cobbler-2.0.7-orig/cobbler/collection_profiles.py cobbler-2.0.7/cobbler/collection_profiles.py
+--- cobbler-2.0.7-orig/cobbler/collection_profiles.py	2013-10-21 14:11:29.326459455 -0400
++++ cobbler-2.0.7/cobbler/collection_profiles.py	2013-10-22 08:35:28.586626217 -0400
+@@ -68,7 +68,11 @@ class Profiles(collection.Collection):
+             if with_delete:
+                 if with_triggers: 
+                     utils.run_triggers(self.config.api, obj, "/var/lib/cobbler/triggers/delete/profile/pre/*", [], logger)
+-            del self.listing[name]
++            self.lock.acquire()
++            try:
++                del self.listing[name]
++            finally:
++                self.lock.release()
+             self.config.serialize_delete(self, obj)
+             if with_delete:
+                 if with_triggers: 
+diff -rupN cobbler-2.0.7-orig/cobbler/collection.py cobbler-2.0.7/cobbler/collection.py
+--- cobbler-2.0.7-orig/cobbler/collection.py	2013-10-21 14:11:29.331459490 -0400
++++ cobbler-2.0.7/cobbler/collection.py	2013-10-22 08:32:46.137481152 -0400
+@@ -26,6 +26,7 @@ import utils
+ import glob
+ import time
+ import random
++from threading import Lock
+ 
+ import action_litesync
+ import item_system
+@@ -45,6 +46,7 @@ class Collection:
+         self.clear()
+         self.api = self.config.api
+         self.lite_sync = None
++        self.lock = Lock()
+ 
+     def factory_produce(self,config,seed_data):
+         """
+@@ -89,9 +91,13 @@ class Collection:
+         if len(kargs) == 1 and kargs.has_key("name") and not return_list:
+             return self.listing.get(kargs["name"].lower(), None)
+ 
+-        for (name, obj) in self.listing.iteritems():
+-            if obj.find_match(kargs, no_errors=no_errors):
+-                matches.append(obj)
++        self.lock.acquire()
++        try:
++            for (name, obj) in self.listing.iteritems():
++                if obj.find_match(kargs, no_errors=no_errors):
++                    matches.append(obj)
++        finally:
++            self.lock.release()
+ 
+         if not return_list:
+             if len(matches) == 0:
+@@ -266,14 +272,22 @@ class Collection:
+ 
+         if not save:
+             # don't need to run triggers, so add it already ...
+-            self.listing[ref.name.lower()] = ref
++            self.lock.acquire()
++            try:
++                self.listing[ref.name.lower()] = ref
++            finally:
++                self.lock.release()
+ 
+         # perform filesystem operations
+         if save:
+             # failure of a pre trigger will prevent the object from being added
+             if with_triggers:
+                 utils.run_triggers(self.api, ref,"/var/lib/cobbler/triggers/add/%s/pre/*" % self.collection_type(), [], logger)
+-            self.listing[ref.name.lower()] = ref
++            self.lock.acquire()
++            try:
++                self.listing[ref.name.lower()] = ref
++            finally:
++                self.lock.release()
+ 
+             # save just this item if possible, if not, save
+             # the whole collection
+diff -rupN cobbler-2.0.7-orig/cobbler/collection_repos.py cobbler-2.0.7/cobbler/collection_repos.py
+--- cobbler-2.0.7-orig/cobbler/collection_repos.py	2013-10-21 14:11:29.324459441 -0400
++++ cobbler-2.0.7/cobbler/collection_repos.py	2013-10-22 08:24:23.448938085 -0400
+@@ -58,7 +58,11 @@ class Repos(collection.Collection):
+                 if with_triggers: 
+                     utils.run_triggers(self.config.api, obj, "/var/lib/cobbler/triggers/delete/repo/pre/*", [], logger)
+ 
+-            del self.listing[name]
++            self.lock.acquire()
++            try:
++                del self.listing[name]
++            finally:
++                self.lock.release()
+             self.config.serialize_delete(self, obj)
+ 
+             if with_delete:
+diff -rupN cobbler-2.0.7-orig/cobbler/collection_systems.py cobbler-2.0.7/cobbler/collection_systems.py
+--- cobbler-2.0.7-orig/cobbler/collection_systems.py	2013-10-21 14:11:29.324459441 -0400
++++ cobbler-2.0.7/cobbler/collection_systems.py	2013-10-22 08:24:36.502030081 -0400
+@@ -56,7 +56,11 @@ class Systems(collection.Collection):
+                 if with_sync:
+                     lite_sync = action_litesync.BootLiteSync(self.config, logger=logger)
+                     lite_sync.remove_single_system(name)
+-            del self.listing[name]
++            self.lock.acquire()
++            try:
++                del self.listing[name]
++            finally:
++                self.lock.release()
+             self.config.serialize_delete(self, obj)
+             if with_delete:
+                 if with_triggers: 

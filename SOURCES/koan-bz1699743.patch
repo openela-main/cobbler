@@ -1,0 +1,63 @@
+diff '--exclude=CVS' '--exclude=.svn' -ur a/koan/app.py b/koan/app.py
+--- a/koan/app.py	2019-03-21 11:35:58.000000000 +0100
++++ b/koan/app.py	2019-04-15 15:21:12.954548508 +0200
+@@ -786,12 +786,6 @@
+ 
+     #---------------------------------------------------
+         
+-    def get_boot_loader_info(self):
+-        cmd = [ "/sbin/grubby", "--bootloader-probe" ]
+-        probe_process = sub_process.Popen(cmd, stdout=sub_process.PIPE)
+-        which_loader = probe_process.communicate()[0].decode()
+-        return probe_process.returncode, which_loader
+-
+     def replace(self):
+         """
+         Handle morphing an existing system through downloading new
+@@ -862,10 +856,6 @@
+             if self.grubby_copy_default:
+                 cmd.append("--copy-default")
+ 
+-            boot_probe_ret_code, probe_output = self.get_boot_loader_info()
+-            if boot_probe_ret_code == 0 and probe_output.find("lilo") >= 0:
+-                cmd.append("--lilo")
+-
+             if self.add_reinstall_entry:
+                cmd.append("--title=Reinstall")
+             else:
+@@ -879,10 +869,7 @@
+ 
+             # Are we running on ppc?
+             if arch.startswith("ppc"):
+-                if "grub2" in probe_output:
+-                    cmd.append("--grub2")
+-                else:
+-                    cmd.append("--yaboot")
++                cmd.append("--grub2")
+             elif arch.startswith("s390"):
+                 cmd.append("--zipl")
+ 
+@@ -900,22 +887,10 @@
+             utils.subprocess_call(cmd)
+ 
+             # Any post-grubby processing required (e.g. ybin, zipl, lilo)?
+-            if arch.startswith("ppc") and "grub2" not in probe_output:
+-                # FIXME - CHRP hardware uses a 'PPC PReP Boot' partition and doesn't require running ybin
+-                print("- applying ybin changes")
+-                cmd = [ "/sbin/ybin" ]
+-                utils.subprocess_call(cmd)
+-            elif arch.startswith("s390"):
++            if arch.startswith("s390"):
+                 print("- applying zipl changes")
+                 cmd = [ "/sbin/zipl" ]
+                 utils.subprocess_call(cmd)
+-            else:
+-                # if grubby --bootloader-probe returns lilo,
+-                #    apply lilo changes
+-                if boot_probe_ret_code == 0 and probe_output.find("lilo") != -1:
+-                    print("- applying lilo changes")
+-                    cmd = [ "/sbin/lilo" ]
+-                    utils.subprocess_call(cmd)
+ 
+             if not self.add_reinstall_entry:
+                 print("- reboot to apply changes")

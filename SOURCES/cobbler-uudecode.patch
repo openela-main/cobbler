@@ -1,0 +1,39 @@
+diff -rupN cobbler-2.0.7.old/scripts/services.py cobbler-2.0.7/scripts/services.py
+--- cobbler-2.0.7.old/scripts/services.py	2015-07-29 10:26:04.312785484 -0400
++++ cobbler-2.0.7/scripts/services.py	2015-07-29 08:41:25.904423573 -0400
+@@ -22,6 +22,7 @@ import os
+ from cobbler.services import CobblerSvc
+ import yaml # PyYAML version
+ import cobbler.utils as utils
++import urllib
+ 
+ #=======================================
+ 
+@@ -34,7 +35,7 @@ def handler(req):
+     but we still need to use the token for all remote requests.
+     """
+ 
+-    my_uri = req.uri
++    my_uri = urllib.unquote(req.uri)
+     
+     req.add_common_vars()
+  
+diff -rupN cobbler-2.0.7.old/scripts/services.wsgi cobbler-2.0.7/scripts/services.wsgi
+--- cobbler-2.0.7.old/scripts/services.wsgi	2015-07-29 10:26:04.312785484 -0400
++++ cobbler-2.0.7/scripts/services.wsgi	2015-07-29 10:14:41.360193691 -0400
+@@ -22,13 +22,14 @@ Foundation, Inc., 51 Franklin Street, Fi
+ import yaml
+ import os
+ import xmlrpclib
++import urllib
+ 
+ from cobbler.services import CobblerSvc
+ import cobbler.utils as utils
+ 
+ def application(environ, start_response):
+ 
+-    my_uri = environ['REQUEST_URI']
++    my_uri = urllib.unquote(environ['REQUEST_URI'])
+     
+     form = {}
+ 

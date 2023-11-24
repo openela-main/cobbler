@@ -1,0 +1,25 @@
+From 9a06847b9b9b8ff0b2da837a5123d1a1178336d7 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:28:43 +0100
+Subject: [PATCH 06/17] octal number Python 3 fix
+
+---
+ koan/vmwcreate.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/koan/vmwcreate.py b/koan/vmwcreate.py
+index c77c018..82bfa4a 100755
+--- a/koan/vmwcreate.py
++++ b/koan/vmwcreate.py
+@@ -104,7 +104,7 @@ def register_vmx(vmx_file):
+        raise VirtCreateException("vmware registration failed")
+     
+ def start_vm(vmx_file):
+-    os.chmod(vmx_file,0755)
++    os.chmod(vmx_file, 0o755)
+     cmd = "vmware-cmd %s start" % vmx_file
+     print("- %s" % cmd)
+     rc = os.system(cmd)
+-- 
+2.5.5
+
