@@ -1,0 +1,26 @@
+From c1c3e1d9f42861a756f26706765cb51b409926c3 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:47:37 +0100
+Subject: [PATCH 16/17] keys() and sort() doesn't work on Python 3
+
+---
+ koan/virtinstall.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/koan/virtinstall.py b/koan/virtinstall.py
+index ce6c425..de2a670 100644
+--- a/koan/virtinstall.py
++++ b/koan/virtinstall.py
+@@ -110,8 +110,7 @@ def _sanitize_nics(nics, bridge, profile_bridge, network_count):
+     if not nics:
+         return ret
+ 
+-    interfaces = nics.keys()
+-    interfaces.sort()
++    interfaces = sorted(nics)
+     counter = -1
+     vlanpattern = re.compile("[a-zA-Z0-9]+\.[0-9]+")
+ 
+-- 
+2.5.5
+

@@ -1,0 +1,12 @@
+diff -up cobbler/action_check.py.orig cobbler-2.0.7/cobbler/action_check.py
+--- cobbler/action_check.py	2010-07-28 17:48:48.000000000 +0200
++++ cobbler/action_check.py	2011-05-25 11:26:10.000000000 +0200
+@@ -51,7 +51,7 @@ class BootCheck:
+        status = []
+        self.checked_dist = utils.check_dist()
+        self.check_name(status)
+-       self.check_selinux(status)
++       # self.check_selinux(status)
+        if self.settings.manage_dhcp:
+            mode = self.config.api.get_sync().dhcp.what()
+            if mode == "isc": 

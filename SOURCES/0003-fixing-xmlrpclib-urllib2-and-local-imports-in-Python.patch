@@ -1,0 +1,195 @@
+From bad2b8a68909f7fba0252b2d61bbd98489fc4996 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:10:46 +0100
+Subject: [PATCH 03/17] fixing xmlrpclib, urllib2 and local imports in Python 3
+
+---
+ koan/app.py         | 23 +++++++++++++----------
+ koan/imagecreate.py |  4 ++--
+ koan/qcreate.py     |  4 ++--
+ koan/register.py    |  7 +++++--
+ koan/utils.py       |  8 ++++++--
+ koan/virtinstall.py |  4 ++--
+ koan/vmwcreate.py   |  1 -
+ koan/xencreate.py   |  4 ++--
+ 8 files changed, 32 insertions(+), 23 deletions(-)
+
+diff --git a/koan/app.py b/koan/app.py
+index 801fedd..e4e8a6d 100755
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -36,10 +36,13 @@ import time
+ import shutil
+ import errno
+ import sys
+-import xmlrpclib
++try: #python2
++    import xmlrpclib
++except ImportError: #python3
++    import xmlrpc.client as xmlrpclib
+ import string
+ import re
+-import utils
++from . import utils
+ 
+ COBBLER_REQUIRED = 1.300
+ 
+@@ -1124,9 +1127,9 @@ class Koan:
+         """
+         pd = profile_data
+         # importing can't throw exceptions any more, don't put it in a sub-method
+-        import xencreate
+-        import qcreate
+-        import imagecreate
++        from . import xencreate
++        from . import qcreate
++        from . import imagecreate
+ 
+         arch                          = self.safe_load(pd,'arch','x86')
+         kextra                        = self.calc_kernel_args(pd)
+@@ -1211,11 +1214,11 @@ class Koan:
+         if (self.image is not None) and (pd["image_type"] == "virt-clone"):
+             fullvirt = True
+             uuid = None
+-            import imagecreate
++            from . import imagecreate
+             creator = imagecreate.start_install
+         elif self.virt_type in [ "xenpv", "xenfv" ]:
+             uuid    = self.get_uuid(self.calc_virt_uuid(pd))
+-            import xencreate
++            from . import xencreate
+             creator = xencreate.start_install
+             if self.virt_type == "xenfv":
+                fullvirt = True 
+@@ -1223,15 +1226,15 @@ class Koan:
+         elif self.virt_type == "qemu":
+             fullvirt = True
+             uuid    = None
+-            import qcreate
++            from . import qcreate
+             creator = qcreate.start_install
+             can_poll = "qemu"
+         elif self.virt_type == "vmware":
+-            import vmwcreate
++            from . import vmwcreate
+             uuid = None
+             creator = vmwcreate.start_install
+         elif self.virt_type == "vmwarew":
+-            import vmwwcreate
++            from . import vmwwcreate
+             uuid = None
+             creator = vmwwcreate.start_install
+         else:
+diff --git a/koan/imagecreate.py b/koan/imagecreate.py
+index 6bd9d9b..d70d519 100644
+--- a/koan/imagecreate.py
++++ b/koan/imagecreate.py
+@@ -23,8 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ 02110-1301  USA
+ """
+ 
+-import utils
+-import virtinstall
++from . import utils
++from . import virtinstall
+ 
+ def start_install(*args, **kwargs):
+     cmd = virtinstall.build_commandline("import", *args, **kwargs)
+diff --git a/koan/qcreate.py b/koan/qcreate.py
+index 019a266..1db3d97 100755
+--- a/koan/qcreate.py
++++ b/koan/qcreate.py
+@@ -23,8 +23,8 @@ module for creating fullvirt guests via KVM/kqemu/qemu
+ requires python-virtinst-0.200 (or virt-install in later distros).
+ """
+ 
+-import utils
+-import virtinstall
++from . import utils
++from . import virtinstall
+ from xml.dom.minidom import parseString
+ 
+ def start_install(*args, **kwargs):
+diff --git a/koan/register.py b/koan/register.py
+index 871b8ac..cabd4a6 100755
+--- a/koan/register.py
++++ b/koan/register.py
+@@ -25,9 +25,12 @@ import traceback
+ from optparse import OptionParser
+ import time
+ import sys
+-import xmlrpclib
++try: #python2
++    import xmlrpclib
++except ImportError: #python3
++    import xmlrpc.client as xmlrpclib
+ import socket
+-import utils
++from . import utils
+ import string
+ 
+ # usage: cobbler-register [--server=server] [--hostname=hostname] --profile=foo
+diff --git a/koan/utils.py b/koan/utils.py
+index 4a3f547..b8247e2 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -25,8 +25,12 @@ import os
+ import traceback
+ import sys
+ import subprocess as sub_process
+-import urllib2
+-import xmlrpclib
++try: #python2
++    import urllib2
++    import xmlrpclib
++except ImportError: #python3
++    import urllib.request as urllib2
++    import xmlrpc.client as xmlrpclib
+ import string
+ import shutil
+ import tempfile
+diff --git a/koan/virtinstall.py b/koan/virtinstall.py
+index 4ef7874..ca11e04 100644
+--- a/koan/virtinstall.py
++++ b/koan/virtinstall.py
+@@ -30,8 +30,8 @@ import os
+ import re
+ import shlex
+ 
+-import app as koan
+-import utils
++from . import app as koan
++from . import utils
+ 
+ # The virtinst module will no longer be availabe to import in some
+ # distros. We need to get all the info we need from the virt-install
+diff --git a/koan/vmwcreate.py b/koan/vmwcreate.py
+index 3fda926..372173a 100755
+--- a/koan/vmwcreate.py
++++ b/koan/vmwcreate.py
+@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ 
+ import os
+ import random
+-import virtinst
+ 
+ IMAGE_DIR = "/var/lib/vmware/images"
+ VMX_DIR = "/var/lib/vmware/vmx"
+diff --git a/koan/xencreate.py b/koan/xencreate.py
+index c3492ed..7eda3e6 100755
+--- a/koan/xencreate.py
++++ b/koan/xencreate.py
+@@ -26,8 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ 02110-1301  USA
+ """
+ 
+-import utils
+-import virtinstall
++from . import utils
++from . import virtinstall
+ 
+ def start_install(*args, **kwargs):
+     cmd = virtinstall.build_commandline("xen:///", *args, **kwargs)
+-- 
+2.5.5
+

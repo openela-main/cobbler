@@ -1,0 +1,11 @@
+--- ./koan/app.py.orig   2018-10-18 09:57:07.010606609 -0400
++++ ./koan/app.py        2018-10-18 09:57:52.062860372 -0400
+@@ -856,7 +856,7 @@
+             cmd = [ "/sbin/grubby",
+                     "--add-kernel", self.safe_load(profile_data,'kernel_local'),
+                     "--initrd", self.safe_load(profile_data,'initrd_local'),
+-                    "--args", "\"%s\"" % k_args
++                    "--args", k_args
+             ]
+ 
+             if self.grubby_copy_default:

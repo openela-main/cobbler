@@ -1,0 +1,25 @@
+From 41cc091c9680935c072b44b4aaa49261d66f6dc4 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:36:30 +0100
+Subject: [PATCH 10/17] open target file in binary mode
+
+---
+ koan/utils.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/koan/utils.py b/koan/utils.py
+index b24fa0f..28c8af1 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -137,7 +137,7 @@ def urlgrab(url,saveto):
+     see comments for urlread as to why it's this way.
+     """
+     data = urlread(url)
+-    fd = open(saveto, "w+")
++    fd = open(saveto, "w+b")
+     fd.write(data)
+     fd.close()
+ 
+-- 
+2.5.5
+

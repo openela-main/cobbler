@@ -1,0 +1,13 @@
+diff -rupN cobbler-2.0.7-old/scripts/services.wsgi cobbler-2.0.7/scripts/services.wsgi
+--- cobbler-2.0.7-old/scripts/services.wsgi	2014-06-02 10:33:45.037218183 -0400
++++ cobbler-2.0.7/scripts/services.wsgi	2014-06-02 10:17:09.122312563 -0400
+@@ -58,6 +58,9 @@ def application(environ, start_response)
+     # like: eth0 XX:XX:XX:XX:XX:XX
+     form["REMOTE_MAC"]  = form.get("HTTP_X_RHN_PROVISIONING_MAC_0", None)
+ 
++    # Save client remote address for ks/triggers
++    form["REMOTE_ADDR"]  = environ['REMOTE_ADDR']
++
+     # Read config for the XMLRPC port to connect to:
+     fd = open("/etc/cobbler/settings")
+     data = fd.read()

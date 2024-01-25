@@ -1,0 +1,33 @@
+From dc08d632d0f27e194da5cec05a1f367237ae4e2c Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:35:29 +0100
+Subject: [PATCH 08/17] do not require urlgrabber
+
+---
+ koan/utils.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/koan/utils.py b/koan/utils.py
+index f2f2692..b24fa0f 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -33,7 +33,6 @@ except ImportError: #python3
+     import xmlrpc.client as xmlrpclib
+ import shutil
+ import tempfile
+-import urlgrabber
+ 
+ VIRT_STATE_NAME_MAP = {
+    0 : "running",
+@@ -493,7 +492,7 @@ def make_floppy(kickstart):
+     # download the kickstart file onto the mounted floppy
+     print("- downloading %s" % kickstart)
+     save_file = os.path.join(mount_path, "unattended.txt")
+-    urlgrabber.urlgrab(kickstart,filename=save_file)
++    urlgrab(kickstart,filename=save_file)
+ 
+     # umount    
+     cmd = "umount %s" % mount_path
+-- 
+2.5.5
+

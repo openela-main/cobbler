@@ -1,0 +1,11 @@
+--- ./koan/app.py	2011-08-23 17:47:53.135881905 +0200
++++ ./koan/app.py	2011-08-23 17:48:18.715879926 +0200
+@@ -1460,7 +1460,7 @@ class Koan:
+             cmd = sub_process.Popen(args, stdout=sub_process.PIPE, shell=True)
+             freespace_str = cmd.communicate()[0]
+             freespace_str = freespace_str.split("\n")[0].strip()
+-            freespace_str = freespace_str.replace("G","") # remove gigabytes
++            freespace_str = freespace_str.lower().replace("g","") # remove gigabytes
+             print "(%s)" % freespace_str
+             freespace = int(float(freespace_str))
+ 

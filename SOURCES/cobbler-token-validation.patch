@@ -1,0 +1,25 @@
+diff -up ./cobbler/remote.py.org ./cobbler/remote.py
+--- ./cobbler/remote.py	2010-10-07 20:12:03.000000000 +0200
++++ ./cobbler/remote.py	2011-12-08 16:18:15.984887836 +0100
+@@ -1501,7 +1501,7 @@ class CobblerXMLRPCInterface:
+             return True
+         else:
+             self._log("invalid token",token=token)
+-            raise CX("invalid token: %s" % token)
++            return False
+
+     def __name_to_object(self,resource,name):
+         if resource.find("distro") != -1:
+@@ -1587,10 +1587,9 @@ class CobblerXMLRPCInterface:
+
+     def token_check(self,token):
+         """
+-        This is a demo function that does not return anything useful.
++        Checks to make sure a token is valid or not
+         """
+-        self.__validate_token(token)
+-        return True
++        return self.__validate_token(token)
+
+     def sync(self,token):
+         """

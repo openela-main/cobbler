@@ -1,0 +1,11 @@
+--- ./koan/app.py	2011-03-31 20:47:55.360598401 +0200
++++ ./koan/app.py	2011-03-31 20:48:01.308598402 +0200
+@@ -808,7 +808,7 @@ class Koan:
+ 
+             (make, version) = utils.os_release()
+ 
+-            if (make == "centos" and version < 6) or (make == "redhat" and version < 6) or (make == "fedora" and version < 10):
++            if (make == "centos" and version < 6) or (make == "redhat" and version < 7) or (make == "fedora" and version < 10):
+ 
+                 # embed the initrd in the kickstart file because of libdhcp and/or pump
+                 # needing the help due to some DHCP timeout potential in some certain

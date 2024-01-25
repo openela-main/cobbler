@@ -1,0 +1,134 @@
+--- ./cobbler/cobblerd.py   2010-07-28 17:48:48.000000000 +0200
++++ ./cobbler/cobblerd.py   2012-01-26 11:26:05.000000000 +0100
+@@ -25,6 +25,7 @@ import socket
+ import time
+ import os
+ import SimpleXMLRPCServer
++import SocketServer
+ import glob
+ from utils import _
+ import xmlrpclib
+@@ -104,7 +105,27 @@ def log(logger,msg):
+ def do_xmlrpc_rw(bootapi,settings,port):
+ 
+     xinterface = remote.ProxiedXMLRPCInterface(bootapi,remote.CobblerXMLRPCInterface)
+-    server = remote.CobblerXMLRPCServer(('127.0.0.1', port))
++
++    bound = False
++    for res in socket.getaddrinfo('localhost', port, socket.AF_UNSPEC,
++        socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
++        (af, sa) = (res[0], res[4])
++        try:
++            SocketServer.TCPServer.address_family = af
++            server = remote.CobblerXMLRPCServer((sa[0], sa[1]))
++        except Exception, msg:
++            if af == socket.AF_INET:
++                message = "Could not bind to %s:%s: %s" % (sa[0], sa[1], msg)
++            elif af == socket.AF_INET6:
++                message = "Could not bind to [%s]:%s: %s" % (sa[0], sa[1], msg)
++            xinterface.logger.debug(message)
++        else:
++            bound = True
++            break
++
++    if not bound:
++        raise socket.error("Could not bind to localhost")
++
+     server.logRequests = 0  # don't print stuff
+     xinterface.logger.debug("XMLRPC running on %s" % port)
+     server.register_instance(xinterface)
+--- ./cobbler/modules/authn_spacewalk.py    2010-07-28 17:48:48.000000000 +0200
++++ ./cobbler/modules/authn_spacewalk.py    2012-01-26 11:26:05.000000000 +0100
+@@ -77,7 +77,7 @@ def authenticate(api_handle,username,pas
+     if server == "xmlrpc.rhn.redhat.com":
+         return False # emergency fail, don't bother RHN!
+ 
+-    spacewalk_url = "https://%s/rpc/api" % server
++    spacewalk_url = "http://%s/rpc/api" % server
+ 
+     client = xmlrpclib.Server(spacewalk_url, verbose=0)
+ 
+--- ./cobbler/utils.py  2012-01-26 11:26:05.000000000 +0100
++++ ./cobbler/utils.py  2012-01-26 11:28:22.000000000 +0100
+@@ -1862,6 +1862,30 @@ def get_shared_secret():
+        return -1
+     return str(data).strip()
+ 
++def get_localhost_addr(port):
++    (sock, sa, af) = (None, None, None)
++    for res in socket.getaddrinfo('localhost', port, socket.AF_UNSPEC, socket.SOCK_STREAM):
++        af, socktype, proto, canonname, sa = res
++        try:
++            sock = socket.socket(af, socktype, proto)
++        except socket.error:
++            sock = None
++            continue
++
++        try:
++            sock.connect((sa[0], sa[1]))
++        except socket.error:
++            sock.close()
++            sock = None
++            continue
++        break
++
++    if sock is None:
++        return (None, None)
++
++    sock.close()
++    return (sa[0], af)
++
+ def local_get_cobbler_api_url():
+     # Load server and http port
+     try:
+@@ -1882,7 +1906,18 @@ def local_get_cobbler_xmlrpc_url():
+     except:
+        traceback.print_exc()
+        raise CX("/etc/cobbler/settings is not a valid YAML file")
+-    return "http://%s:%s" % ("127.0.0.1",data.get("xmlrpc_port","25151"))
++    port = data.get("xmlrpc_port","25151")
++    addr = get_localhost_addr(port)
++
++    if addr[1] == socket.AF_INET:
++        return "http://%s:%s" % (addr[0], port)
++    if addr[1] == socket.AF_INET6:
++        return "http://[%s]:%s" % (addr[0], port)
++
++    if os.path.exists('/proc/net/if_inet6'):
++        return "http://[::1]:%s" % port
++    else:
++        return "http://127.0.0.1:%s" % port
+ 
+ def strip_none(data, omit_none=False):
+     """
+--- ./scripts/services.py   2010-07-28 17:48:48.000000000 +0200
++++ ./scripts/services.py   2012-01-26 11:26:05.000000000 +0100
+@@ -78,7 +78,7 @@ def handler(req):
+     # instantiate a CobblerWeb object
+     cw = CobblerSvc(
+          apache   = apache,
+-         server   = "http://127.0.0.1:%s" % remote_port
++         server   = utils.local_get_cobbler_xmlrpc_url()
+     )
+ 
+     # check for a valid path/mode
+--- ./scripts/services.wsgi 2010-10-07 20:12:03.000000000 +0200
++++ ./scripts/services.wsgi 2012-01-26 11:26:05.000000000 +0100
+@@ -23,6 +23,7 @@ import yaml
+ import os
+ 
+ from cobbler.services import CobblerSvc
++import cobbler.utils as utils
+ 
+ def application(environ, start_response):
+ 
+@@ -64,7 +65,7 @@ def application(environ, start_response)
+     remote_port = ydata.get("xmlrpc_port",25151)
+ 
+     # instantiate a CobblerWeb object
+-    cw = CobblerSvc(server = "http://127.0.0.1:%s" % remote_port)
++    cw = CobblerSvc(server = utils.local_get_cobbler_xmlrpc_url())
+ 
+     # check for a valid path/mode
+     # handle invalid paths gracefully
+

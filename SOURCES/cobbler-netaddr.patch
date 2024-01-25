@@ -1,0 +1,23 @@
+--- ./cobbler/utils.py	2011-08-23 17:19:24.442680062 +0200
++++ ./cobbler/utils.py	2011-08-23 17:19:37.466012392 +0200
+@@ -186,8 +186,9 @@ def get_host_ip(ip, shorten=True):
+         ip = netaddr.IP(ip)
+         cidr = ip.cidr()
+     else:
+-        ip = netaddr.ip.IPAddress(ip)
+-        cidr = netaddr.ip.IPNetwork(ip)
++        ipnet = netaddr.IPNetwork(ip)
++        ip = ipnet.ip
++        cidr = ipnet.cidr
+ 
+     if len(cidr) == 1: # Just an IP, e.g. a /32
+         return pretty_hex(ip)
+@@ -210,7 +211,7 @@ def _IP(ip):
+    if NETADDR_PRE_0_7:
+        ip_class = netaddr.IP
+    else:
+-        ip_class = netaddr.ip.IPAddress
++       ip_class = netaddr.ip.IPNetwork
+    if isinstance(ip, ip_class) or ip == "":
+       return ip
+    else:

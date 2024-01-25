@@ -1,0 +1,34 @@
+From 31321dc6d1dd14166601ffc59b9e98c02aaf25f0 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:37:07 +0100
+Subject: [PATCH 11/17] make sure it's a string
+
+---
+ koan/app.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/koan/app.py b/koan/app.py
+index ac6b0df..f251c77 100755
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -805,7 +805,7 @@ class Koan:
+     def get_boot_loader_info(self):
+         cmd = [ "/sbin/grubby", "--bootloader-probe" ]
+         probe_process = sub_process.Popen(cmd, stdout=sub_process.PIPE)
+-        which_loader = probe_process.communicate()[0]
++        which_loader = probe_process.communicate()[0].decode()
+         return probe_process.returncode, which_loader
+ 
+     def replace(self):
+@@ -851,7 +851,7 @@ class Koan:
+                     )
+ 
+             arch_cmd = sub_process.Popen("/bin/uname -m", stdout=sub_process.PIPE, shell=True)
+-            arch = arch_cmd.communicate()[0]
++            arch = arch_cmd.communicate()[0].decode()
+ 
+             # Validate kernel argument length (limit depends on architecture --
+             # see asm-*/setup.h).  For example:
+-- 
+2.5.5
+

@@ -1,0 +1,17 @@
+--- ./snippets/post_install_network_config	2013-05-13 16:18:57.855827751 +0200
++++ ./snippets/post_install_network_config      2013-05-13 16:19:20.707940757 +0200
+@@ -204,13 +204,8 @@ echo "IPV6_DEFAULTGW=$ipv6_default_gatew
+                     #end if
+                 #end if
+             #else
+-                #if $ip == ""
+-                ## this interface has no IPv4 address set
+-echo "BOOTPROTO=none" >> $devfile
+-                #else
+-                ## this is a DHCP interface, much less work to do
++            ## this is a DHCP interface, much less work to do
+ echo "BOOTPROTO=dhcp" >> $devfile
+-                #end if
+             #end if
+             #if $mtu != ""
+ echo "MTU=$mtu" >> $devfile

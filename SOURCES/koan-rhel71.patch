@@ -1,0 +1,34 @@
+diff -rupN cobbler-2.0.7.old/koan/virtinstall.py cobbler-2.0.7/koan/virtinstall.py
+--- cobbler-2.0.7.old/koan/virtinstall.py	2015-01-22 11:11:27.917649507 -0500
++++ cobbler-2.0.7/koan/virtinstall.py	2015-01-22 11:30:07.849523465 -0500
+@@ -69,7 +69,16 @@ except:
+         for variant in variants:
+             supported_variants.add(variant.split()[0])
+     except:
+-        pass # No problem, we'll just use generic
++        try:
++            # maybe on newer os using osinfo-query?
++            rc, response = utils.subprocess_get_response(
++                    shlex.split('osinfo-query os'))
++            variants = response.split('\n')
++            for variant in variants:
++                supported_variants.add(variant.split()[0])
++        except:
++            # okay, probably on old os and we'll just use generic26
++            pass
+ 
+ def _sanitize_disks(disks):
+     ret = []
+@@ -362,6 +371,12 @@ def build_commandline(uri,
+             found = False
+             if os_version in supported_variants:
+                 cmd += "--os-variant %s " % os_version
++            elif os_version + ".0" in supported_variants:
++                # osinfo based virt-install only knows about major.minor
++                # variants, not just major variants like it used to. Default
++                # to major.0 variant in that case. Lack of backwards
++                # compatibility in virt-install grumble grumble.
++                cmd += "--os-variant %s" % os_version + ".0 "
+             else:
+                 print ("- warning: virt-install doesn't know this os_version, defaulting to generic26")
+                 cmd += "--os-variant generic26 "

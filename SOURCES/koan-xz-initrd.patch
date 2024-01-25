@@ -1,0 +1,23 @@
+--- ./koan/app.py  2012-06-21 13:38:43.303738934 +0200
++++ ./koan/app.py  2012-06-21 13:40:26.704251677 +0200
+@@ -912,7 +912,9 @@ class Koan:
+         return r"""
+         cd /var/spool/koan
+         mkdir initrd
+-        gzip -dc %s > initrd.tmp
++        if ! gzip -dc %s > initrd.tmp 2> /dev/null; then
++            xz -dc %s > initrd.tmp
++        fi
+         if mount -o loop -t ext2 initrd.tmp initrd >&/dev/null ; then
+             cp ks.cfg initrd/
+             ln initrd/ks.cfg initrd/tmp/ks.cfg
+@@ -927,7 +929,7 @@ class Koan:
+             find . | cpio -o -H newc | gzip -9 > ../initrd_final
+             echo "...done"
+         fi
+-        """ % initrd
++        """ % (initrd, initrd)
+ 
+     #---------------------------------------------------
+ 
+

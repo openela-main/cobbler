@@ -1,0 +1,26 @@
+--- cobbler/utils.py	2010-10-07 20:12:03.000000000 +0200
++++ cobbler/utils.py	2011-05-25 15:53:03.000000000 +0200
+@@ -996,21 +996,8 @@
+     return True
+ 
+ def is_safe_to_hardlink(src,dst,api):
+-    (dev1, path1) = get_file_device_path(src)
+-    (dev2, path2) = get_file_device_path(dst)
+-    if dev1 != dev2:
+-       return False
+-    if dev1.find(":") != -1:
+-       # is remoted
+-       return False
+-    # note: this is very cobbler implementation specific!
+-    if not api.is_selinux_enabled():
+-       return True
+-    if _re_initrd.match(os.path.basename(path1)):
+-       return True
+-    if _re_kernel.match(os.path.basename(path1)):
+-       return True
+-    # we're dealing with SELinux and files that are not safe to chcon
++    # 568801: hardlinks ruin SELinux contexts because multiple
++    # paths match, avoid hardlinks
+     return False
+ 
+ def hashfile(fn, lcache=None, logger=None):

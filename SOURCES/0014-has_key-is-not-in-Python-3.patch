@@ -1,0 +1,129 @@
+From 769722facf088ea59ab010b363fc44d18b70d670 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:43:20 +0100
+Subject: [PATCH 14/17] has_key is not in Python 3
+
+---
+ koan/app.py         | 14 +++++++-------
+ koan/utils.py       |  2 +-
+ koan/virtinstall.py |  4 ++--
+ koan/vmwcreate.py   |  4 ++--
+ 4 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/koan/app.py b/koan/app.py
+index f251c77..4ae4c90 100755
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -454,9 +454,9 @@ class Koan:
+     #---------------------------------------------------
+ 
+     def safe_load(self,hashv,primary_key,alternate_key=None,default=None):
+-        if hashv.has_key(primary_key): 
++        if primary_key in hashv:
+             return hashv[primary_key]
+-        elif alternate_key is not None and hashv.has_key(alternate_key):
++        elif alternate_key is not None and alternate_key in hashv:
+             return hashv[alternate_key]
+         else:
+             return default
+@@ -524,7 +524,7 @@ class Koan:
+                 if profile_data.get("xml_file","") != "":
+                     raise InfoException("xmlfile based installations are not supported")
+ 
+-                elif profile_data.has_key("file"):
++                elif "file" in profile_data:
+                     print("- ISO or Image based installation, always uses --virt-type=qemu")
+                     self.virt_type = "qemu"
+                     
+@@ -661,7 +661,7 @@ class Koan:
+             raise InfoException("koan does not know how to list that")
+         data = self.get_data(what)
+         for x in data:
+-            if x.has_key("name"):
++            if "name" in x:
+                 print(x["name"])
+         return True
+ 
+@@ -670,7 +670,7 @@ class Koan:
+     def display(self):
+         def after_download(self, profile_data):
+             for x in DISPLAY_PARAMS:
+-                if profile_data.has_key(x):
++                if x in profile_data:
+                     value = profile_data[x]
+                     if x == 'kernel_options':
+                         value = self.calc_kernel_args(profile_data)
+@@ -732,7 +732,7 @@ class Koan:
+             print("- file: %s" % save_as)
+ 
+             pattern = "http://%s/cblr/svc/op/template/%s/%s/path/%s"
+-            if profile_data.has_key("interfaces"):
++            if "interfaces" in profile_data:
+                 url = pattern % (profile_data["http_server"],"system",profile_data["name"],dest)
+             else:
+                 url = pattern % (profile_data["http_server"],"profile",profile_data["name"],dest)
+@@ -1284,7 +1284,7 @@ class Koan:
+         if self.virt_name is not None:
+            # explicit override
+            name = self.virt_name
+-        elif profile_data.has_key("interfaces"):
++        elif "interfaces" in profile_data:
+            # this is a system object, just use the name
+            name = profile_data["name"]
+         else:
+diff --git a/koan/utils.py b/koan/utils.py
+index 0cd48ea..12ec718 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -206,7 +206,7 @@ def input_string_or_hash(options,delim=None,allow_multiples=True):
+                 new_dict[key] = value
+ 
+         # dict.pop is not avail in 2.2
+-        if new_dict.has_key(""):
++        if "" in new_dict:
+            del new_dict[""]
+         return new_dict
+     elif type(options) == type({}):
+diff --git a/koan/virtinstall.py b/koan/virtinstall.py
+index 2d1f3df..5359b2a 100644
+--- a/koan/virtinstall.py
++++ b/koan/virtinstall.py
+@@ -233,7 +233,7 @@ def build_commandline(uri,
+             raise koan.InfoException("Profile 'file' required for image "
+                                      "install")
+ 
+-    elif profile_data.has_key("file"):
++    elif "file" in profile_data:
+         if is_xen:
+             raise koan.InfoException("Xen does not work with --image yet")
+ 
+@@ -255,7 +255,7 @@ def build_commandline(uri,
+             floppy = utils.make_floppy(kickstart)
+     elif is_qemu or is_xen:
+         # images don't need to source this
+-        if not profile_data.has_key("install_tree"):
++        if not "install_tree" in profile_data:
+             raise koan.InfoException("Cannot find install source in kickstart file, aborting.")
+ 
+         if not profile_data["install_tree"].endswith("/"):
+diff --git a/koan/vmwcreate.py b/koan/vmwcreate.py
+index 82bfa4a..33c5819 100755
+--- a/koan/vmwcreate.py
++++ b/koan/vmwcreate.py
+@@ -126,11 +126,11 @@ def start_install(name=None,
+                   virt_type=None,
+                   virt_auto_boot=False):
+ 
+-    if profile_data.has_key("file"):
++    if "file" in profile_data:
+         raise koan.InfoException("vmware does not work with --image yet")
+ 
+     mac = None
+-    if not profile_data.has_key("interfaces"):
++    if not "interfaces" in profile_data:
+         print("- vmware installation requires a system, not a profile")
+         return 1
+     for iname in profile_data["interfaces"]:
+-- 
+2.5.5
+

@@ -1,0 +1,671 @@
+From 650f96a40ab858904ae4ea17481a59a75ade7def Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 12:02:02 +0100
+Subject: [PATCH 17/17] raise is a function call in python3
+
+---
+ koan/app.py         | 82 ++++++++++++++++++++++++++---------------------------
+ koan/qcreate.py     |  2 +-
+ koan/register.py    |  8 +++---
+ koan/utils.py       | 42 +++++++++++++--------------
+ koan/virtinstall.py | 14 ++++-----
+ koan/vmwcreate.py   | 10 +++----
+ 6 files changed, 79 insertions(+), 79 deletions(-)
+
+diff --git a/koan/app.py b/koan/app.py
+index f5af5e9..ed81fe4 100755
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -283,7 +283,7 @@ class Koan:
+         # we can get the info we need from either the cobbler server
+         #  or a kickstart file
+         if self.server is None:
+-            raise InfoException("no server specified")
++            raise(InfoException("no server specified"))
+ 
+         # check to see that exclusive arguments weren't used together
+         found = 0
+@@ -291,13 +291,13 @@ class Koan:
+             if x:
+                found = found+1
+         if found != 1:
+-            raise InfoException("choose: --virt, --replace-self, --update-files, --list=what, or --display")
++            raise(InfoException("choose: --virt, --replace-self, --update-files, --list=what, or --display"))
+  
+ 
+         # This set of options are only valid with --server
+         if not self.server or self.server == "":
+             if self.list_items or self.profile or self.system or self.port:
+-                raise InfoException("--server is required")
++                raise(InfoException("--server is required"))
+ 
+         self.xmlrpc_server = utils.connect_to_server(server=self.server, port=self.port)
+ 
+@@ -315,7 +315,7 @@ class Koan:
+         # if both --profile and --system were ommitted, autodiscover
+         if self.is_virt:
+             if (self.profile is None and self.system is None and self.image is None):
+-                raise InfoException("must specify --profile, --system, or --image")
++                raise(InfoException("must specify --profile, --system, or --image"))
+         else:
+             if (self.profile is None and self.system is None and self.image is None):
+                 self.system = self.autodetect_system(allow_interactive=self.live_cd)
+@@ -330,23 +330,23 @@ class Koan:
+             if self.virt_type not in [ "qemu", "xenpv", "xenfv", "xen", "vmware", "vmwarew", "auto" ]:
+                if self.virt_type == "xen":
+                    self.virt_type = "xenpv"
+-               raise InfoException("--virt-type should be qemu, xenpv, xenfv, vmware, vmwarew, or auto")
++               raise(InfoException("--virt-type should be qemu, xenpv, xenfv, vmware, vmwarew, or auto"))
+ 
+         # if --qemu-disk-type was called without --virt-type=qemu, then fail
+         if (self.qemu_disk_type is not None):
+             self.qemu_disk_type = self.qemu_disk_type.lower()
+             if self.virt_type not in [ "qemu", "auto", "kvm" ]:
+-               raise(InfoException, "--qemu-disk-type must use with --virt-type=qemu")
++               raise((InfoException, "--qemu-disk-type must use with --virt-type=qemu"))
+ 
+         # if --qemu-net-type was called without --virt-type=qemu, then fail
+         if (self.qemu_net_type is not None):
+             self.qemu_net_type = self.qemu_net_type.lower()
+             if self.virt_type not in [ "qemu", "auto", "kvm" ]:
+-               raise InfoException, "--qemu-net-type must use with --virt-type=qemu"
++               raise(InfoException, "--qemu-net-type must use with --virt-type=qemu")
+ 
+         # if --static-interface and --profile was called together, then fail
+         if self.static_interface is not None and self.profile is not None:
+-            raise InfoException("--static-interface option is incompatible with --profile option use --system instead")
++            raise(InfoException("--static-interface option is incompatible with --profile option use --system instead"))
+ 
+         # perform one of three key operations
+         if self.is_virt:
+@@ -423,12 +423,12 @@ class Koan:
+         detected_systems = utils.uniqify(detected_systems)
+ 
+         if len(detected_systems) > 1:
+-            raise InfoException("Error: Multiple systems matched")
++            raise(InfoException("Error: Multiple systems matched"))
+         elif len(detected_systems) == 0:
+             if not allow_interactive:
+                 mac_criteria = utils.uniqify(mac_criteria, purge="?")
+                 ip_criteria  = utils.uniqify(ip_criteria, purge="?")
+-                raise InfoException("Error: Could not find a matching system with MACs: %s or IPs: %s" % (",".join(mac_criteria), ",".join(ip_criteria)))
++                raise(InfoException("Error: Could not find a matching system with MACs: %s or IPs: %s" % (",".join(mac_criteria), ",".join(ip_criteria))))
+             else:
+                 return None
+         elif len(detected_systems) == 1:
+@@ -506,7 +506,7 @@ class Koan:
+             if self.virt_type == "auto":
+ 
+                 if profile_data.get("xml_file","") != "":
+-                    raise InfoException("xmlfile based installations are not supported")
++                    raise(InfoException("xmlfile based installations are not supported"))
+ 
+                 elif "file" in profile_data:
+                     print("- ISO or Image based installation, always uses --virt-type=qemu")
+@@ -523,7 +523,7 @@ class Koan:
+                         self.virt_type = "qemu"
+                     else:
+                         # assume Xen, we'll check to see if virt-type is really usable later.
+-                        raise InfoException("Not running a Xen kernel and qemu is not installed")
++                        raise(InfoException("Not running a Xen kernel and qemu is not installed"))
+ 
+                 print("- no virt-type specified, auto-selecting %s" % self.virt_type)
+ 
+@@ -535,20 +535,20 @@ class Koan:
+                 uname_str = cmd.communicate()[0]
+                 # correct kernel on dom0?
+                 if uname_str.find("xen") == -1:
+-                   raise InfoException("kernel-xen needs to be in use")
++                   raise(InfoException("kernel-xen needs to be in use"))
+                 # xend installed?
+                 if not os.path.exists("/usr/sbin/xend"):
+-                   raise InfoException("xen package needs to be installed")
++                   raise(InfoException("xen package needs to be installed"))
+                 # xend running?
+                 rc = sub_process.call("/usr/sbin/xend status", stderr=None, stdout=None, shell=True)
+                 if rc != 0:
+-                   raise InfoException("xend needs to be started")
++                   raise(InfoException("xend needs to be started"))
+ 
+             # for qemu
+             if self.virt_type == "qemu":
+                 # qemu package installed?
+                 if not os.path.exists("/usr/bin/qemu-img"):
+-                    raise InfoException("qemu package needs to be installed")
++                    raise(InfoException("qemu package needs to be installed"))
+                 # is libvirt new enough?
+                 # Note: in some newer distros (like Fedora 19) the python-virtinst package has been
+                 # subsumed into virt-install. If we don't have one check to see if we have the other.
+@@ -556,7 +556,7 @@ class Koan:
+                 if rc != 0:
+                     rc, version_str = utils.subprocess_get_response(shlex.split('rpm -q python-virtinst'), True)
+                     if rc != 0 or version_str.find("virtinst-0.1") != -1 or version_str.find("virtinst-0.0") != -1:
+-                        raise InfoException("need python-virtinst >= 0.2 or virt-install package to do installs for qemu/kvm (depending on your OS)")
++                        raise(InfoException("need python-virtinst >= 0.2 or virt-install package to do installs for qemu/kvm (depending on your OS)"))
+ 
+             # for vmware
+             if self.virt_type == "vmware" or self.virt_type == "vmwarew":
+@@ -565,14 +565,14 @@ class Koan:
+ 
+             if self.virt_type == "virt-image":
+                 if not os.path.exists("/usr/bin/virt-image"):
+-                    raise InfoException("virt-image not present, downlevel virt-install package?")
++                    raise(InfoException("virt-image not present, downlevel virt-install package?"))
+ 
+             # for both virt types
+             if os.path.exists("/etc/rc.d/init.d/libvirtd"):
+                 rc = sub_process.call("/sbin/service libvirtd status", stdout=None, shell=True)
+                 if rc != 0:
+                     # libvirt running?
+-                    raise InfoException("libvirtd needs to be running")
++                    raise(InfoException("libvirtd needs to be running"))
+ 
+ 
+             if self.virt_type in [ "xenpv" ]:
+@@ -642,7 +642,7 @@ class Koan:
+ 
+     def list(self,what):
+         if what not in [ "images", "profiles", "systems", "distros", "repos" ]:
+-            raise InfoException("koan does not know how to list that")
++            raise(InfoException("koan does not know how to list that"))
+         data = self.get_data(what)
+         for x in data:
+             if "name" in x:
+@@ -766,12 +766,12 @@ class Koan:
+             #   asm-x86_64/setup.h:#define COMMAND_LINE_SIZE    2048
+             if arch.startswith("ppc") or arch.startswith("ia64"):
+                 if len(k_args) > 511:
+-                    raise InfoException("Kernel options are too long, 512 chars exceeded: %s" % k_args)
++                    raise(InfoException("Kernel options are too long, 512 chars exceeded: %s" % k_args))
+             elif arch.startswith("s390"):
+                 if len(k_args) > 895:
+-                    raise(InfoException, "Kernel options are too long, 896 chars exceeded: %s" % k_args)
++                    raise((InfoException, "Kernel options are too long, 896 chars exceeded: %s" % k_args))
+             elif len(k_args) > 2047:
+-                raise(InfoException, "Kernel options are too long, 2047 chars exceeded: %s" % k_args)
++                raise((InfoException, "Kernel options are too long, 2047 chars exceeded: %s" % k_args))
+ 
+             utils.subprocess_call([
+                 'kexec',
+@@ -803,18 +803,18 @@ class Koan:
+         except OSError as xxx_todo_changeme:
+             (err, msg) = xxx_todo_changeme.args
+             if err != errno.ENOENT:
+-                raise
++                raise()
+         try:
+             os.makedirs("/var/spool/koan")
+         except OSError as xxx_todo_changeme:
+             (err, msg) = xxx_todo_changeme.args
+             if err != errno.EEXIST:
+-                raise
++                raise()
+     
+ 
+         def after_download(self, profile_data):
+             if not os.path.exists("/sbin/grubby"):
+-                raise InfoException("grubby is not installed")
++                raise(InfoException("grubby is not installed"))
+             k_args = self.calc_kernel_args(profile_data,replace_self=1)
+ 
+             kickstart = self.safe_load(profile_data,'kickstart')
+@@ -846,12 +846,12 @@ class Koan:
+             #   asm-x86_64/setup.h:#define COMMAND_LINE_SIZE    2048
+             if arch.startswith("ppc") or arch.startswith("ia64"):
+                 if len(k_args) > 511:
+-                    raise InfoException("Kernel options are too long, 512 chars exceeded: %s" % k_args)
++                    raise(InfoException("Kernel options are too long, 512 chars exceeded: %s" % k_args))
+             elif arch.startswith("s390"):
+                 if len(k_args) > 895:
+-                    raise(InfoException, "Kernel options are too long, 896 chars exceeded: %s" % k_args)
++                    raise((InfoException, "Kernel options are too long, 896 chars exceeded: %s" % k_args))
+             elif len(k_args) > 2047:
+-                raise(InfoException, "Kernel options are too long, 2047 chars exceeded: %s" % k_args)
++                raise((InfoException, "Kernel options are too long, 2047 chars exceeded: %s" % k_args))
+ 
+             cmd = [ "/sbin/grubby",
+                     "--add-kernel", self.safe_load(profile_data,'kernel_local'),
+@@ -977,7 +977,7 @@ class Koan:
+     #---------------------------------------------------
+ 
+     def connect_fail(self):
+-        raise InfoException("Could not communicate with %s:%s" % (self.server, self.port))
++        raise(InfoException("Could not communicate with %s:%s" % (self.server, self.port)))
+ 
+     #---------------------------------------------------
+ 
+@@ -991,7 +991,7 @@ class Koan:
+             traceback.print_exc()
+             self.connect_fail()
+         if data == {}:
+-            raise InfoException("No entry/entries found")
++            raise(InfoException("No entry/entries found"))
+         return data
+     
+     #---------------------------------------------------
+@@ -1060,7 +1060,7 @@ class Koan:
+             utils.urlgrab(kernel,kernel_save)
+         except:
+             traceback.print_exc()
+-            raise(InfoException, "error downloading files")
++            raise((InfoException, "error downloading files"))
+         profile_data['kernel_local'] = kernel_save
+         profile_data['initrd_local'] = initrd_save
+ 
+@@ -1179,7 +1179,7 @@ class Koan:
+             elif can_poll == "qemu":
+                conn = libvirt.open("qemu:///system")
+             else:
+-               raise InfoException("Don't know how to poll this virt-type")
++               raise(InfoException("Don't know how to poll this virt-type"))
+             ct = 0
+             while True:
+                time.sleep(3)
+@@ -1196,7 +1196,7 @@ class Koan:
+                    utils.find_vm(conn, virtname).create()    
+                    return results
+                else:
+-                   raise InfoException("internal error, bad virt state")
++                   raise(InfoException("internal error, bad virt state"))
+ 
+         if virt_auto_boot:
+             if self.virt_type in [ "xenpv", "xenfv" ]:
+@@ -1240,7 +1240,7 @@ class Koan:
+             uuid = None
+             creator = vmwwcreate.start_install
+         else:
+-            raise InfoException("Unspecified virt type: %s" % self.virt_type)
++            raise(InfoException("Unspecified virt type: %s" % self.virt_type))
+         return (uuid, creator, fullvirt, can_poll)
+ 
+     #---------------------------------------------------
+@@ -1259,7 +1259,7 @@ class Koan:
+         if len(disks) == 0:
+             print("paths: ", paths)
+             print("sizes: ", sizes)
+-            raise InfoException("Disk configuration not resolvable!")
++            raise(InfoException("Disk configuration not resolvable!"))
+         return disks
+ 
+     #---------------------------------------------------
+@@ -1462,13 +1462,13 @@ class Koan:
+                 os.makedirs(os.path.dirname(location))
+                 return location
+             else:
+-                raise(InfoException, "invalid location: %s" % location)
++                raise((InfoException, "invalid location: %s" % location))
+         elif location.startswith("/dev/"):
+             # partition
+             if os.path.exists(location):
+                 return location
+             else:
+-                raise InfoException("virt path is not a valid block device")
++                raise(InfoException("virt path is not a valid block device"))
+         else:
+             # it's a volume group, verify that it exists
+             args = "vgs -o vg_name"
+@@ -1477,7 +1477,7 @@ class Koan:
+             print(vgnames)
+ 
+             if vgnames.find(location) == -1:
+-                raise InfoException("The volume group [%s] does not exist." % location)
++                raise(InfoException("The volume group [%s] does not exist." % location))
+             
+             # check free space
+             args = "LANG=C vgs --noheadings -o vg_free --units g %s" % location
+@@ -1512,13 +1512,13 @@ class Koan:
+                     print("%s" % args)
+                     lv_create = sub_process.call(args, shell=True)
+                     if lv_create != 0:
+-                        raise InfoException("LVM creation failed")
++                        raise(InfoException("LVM creation failed"))
+ 
+                 # return partition location
+                 return "/dev/%s/%s" % (location,name)
+ 
+             else:
+-                raise InfoException("volume group needs %s GB free space." % virt_size)
++                raise(InfoException("volume group needs %s GB free space." % virt_size))
+ 
+ 
+     def randomUUID(self):
+diff --git a/koan/qcreate.py b/koan/qcreate.py
+index 73b6abb..e41a532 100755
+--- a/koan/qcreate.py
++++ b/koan/qcreate.py
+@@ -38,7 +38,7 @@ def start_install(*args, **kwargs):
+     try:
+         import libvirt
+     except:
+-        raise app.InfoException("package libvirt is required for installing virtual guests")
++        raise(app.InfoException("package libvirt is required for installing virtual guests"))
+     conn = libvirt.openReadOnly(None)
+     # See http://libvirt.org/formatcaps.html
+     capabilities = parseString(conn.getCapabilities())
+diff --git a/koan/register.py b/koan/register.py
+index 8ce7db3..0a066f1 100755
+--- a/koan/register.py
++++ b/koan/register.py
+@@ -124,7 +124,7 @@ class Register:
+         # not really required, but probably best that ordinary users don't try
+         # to run this not knowing what it does.
+         if os.getuid() != 0:
+-           raise InfoException("root access is required to register")
++           raise(InfoException("root access is required to register"))
+  
+         print("- preparing to koan home")
+         self.conn = connect_to_server(self.server, self.port)
+@@ -144,12 +144,12 @@ class Register:
+                     hostname = ""
+                     sysname = str(time.time())
+                 else:
+-                    raise InfoException("must specify --fqdn, could not discover")
++                    raise(InfoException("must specify --fqdn, could not discover"))
+             if sysname == "":
+                 sysname = hostname
+ 
+         if self.profile == "":
+-            raise InfoException("must specify --profile")
++            raise(InfoException("must specify --profile"))
+ 
+         # we'll do a profile check here just to avoid some log noise on the remote end.
+         # network duplication checks and profile checks also happen on the remote end.
+@@ -166,7 +166,7 @@ class Register:
+         reg_info['hostname'] = hostname
+         
+         if not matched_profile:
+-            raise InfoException("no such remote profile, see 'koan --list-profiles'") 
++            raise(InfoException("no such remote profile, see 'koan --list-profiles'") )
+ 
+         if not self.batch:
+             self.conn.register_new_system(reg_info)
+diff --git a/koan/utils.py b/koan/utils.py
+index 607db1f..b88ba94 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -92,7 +92,7 @@ def urlread(url):
+     """
+     print("- reading URL: %s" % url)
+     if url is None or url == "":
+-        raise InfoException("invalid URL: %s" % url)
++        raise(InfoException("invalid URL: %s" % url))
+ 
+     elif url[0:3] == "nfs":
+         try:
+@@ -110,7 +110,7 @@ def urlread(url):
+             return data
+         except:
+             traceback.print_exc()
+-            raise(InfoException, "Couldn't mount and read URL: %s" % url)
++            raise((InfoException, "Couldn't mount and read URL: %s" % url))
+           
+     elif url[0:4] == "http":
+         try:
+@@ -120,7 +120,7 @@ def urlread(url):
+             return data
+         except:
+             traceback.print_exc()
+-            raise(InfoException, "Couldn't download: %s" % url)
++            raise((InfoException, "Couldn't download: %s" % url))
+     elif url[0:4] == "file":
+         try:
+             fd = open(url[5:])
+@@ -128,10 +128,10 @@ def urlread(url):
+             fd.close()
+             return data
+         except:
+-            raise InfoException("Couldn't read file from URL: %s" % url)
++            raise(InfoException("Couldn't read file from URL: %s" % url))
+               
+     else:
+-        raise InfoException("Unhandled URL protocol: %s" % url)
++        raise(InfoException("Unhandled URL protocol: %s" % url))
+ 
+ def urlgrab(url,saveto):
+     """
+@@ -150,7 +150,7 @@ def subprocess_call(cmd,ignore_rc=0):
+     print("- %s" % cmd)
+     rc = sub_process.call(cmd)
+     if rc != 0 and not ignore_rc:
+-        raise InfoException("command failed (%s)" % rc)
++        raise(InfoException("command failed (%s)" % rc))
+     return rc
+ 
+ def subprocess_get_response(cmd, ignore_rc=False):
+@@ -165,7 +165,7 @@ def subprocess_get_response(cmd, ignore_rc=False):
+     result = result.strip()
+     rc = p.poll()
+     if not ignore_rc and rc != 0:
+-        raise InfoException("command failed (%s)" % rc)
++        raise(InfoException("command failed (%s)" % rc))
+     return rc, result
+ 
+ def input_string_or_hash(options,delim=None,allow_multiples=True):
+@@ -178,7 +178,7 @@ def input_string_or_hash(options,delim=None,allow_multiples=True):
+     if options is None:
+         return {}
+     elif type(options) == list:
+-        raise InfoException("No idea what to do with list: %s" % options)
++        raise(InfoException("No idea what to do with list: %s" % options))
+     elif type(options) == type(""):
+         new_dict = {}
+         tokens = options.split(delim)
+@@ -215,7 +215,7 @@ def input_string_or_hash(options,delim=None,allow_multiples=True):
+         options.pop('',None)
+         return options
+     else:
+-        raise InfoException("invalid input type: %s" % type(options))
++        raise(InfoException("invalid input type: %s" % type(options)))
+ 
+ def hash_to_string(hash):
+     """
+@@ -255,7 +255,7 @@ def nfsmount(input_path):
+     rc = sub_process.call(mount_cmd)
+     if not rc == 0:
+         shutil.rmtree(tempdir, ignore_errors=True)
+-        raise InfoException("nfs mount failed: %s" % dirpath)
++        raise(InfoException("nfs mount failed: %s" % dirpath))
+     # NOTE: option for a blocking install might be nice, so we could do this
+     # automatically, if supported by virt-install
+     print("after install completes, you may unmount and delete %s" % tempdir)
+@@ -290,7 +290,7 @@ def find_vm(conn, vmid):
+         if vm.name() == vmid:
+             return vm
+      
+-    raise InfoException("koan could not find the VM to watch: %s" % vmid)
++    raise(InfoException("koan could not find the VM to watch: %s" % vmid))
+ 
+ def get_vm_state(conn, vmid):
+     """
+@@ -335,7 +335,7 @@ def os_release():
+              return (make,float(t))
+          except ValueError:
+              pass
+-      raise InfoException("failed to detect local OS version from /etc/redhat-release")
++      raise(InfoException("failed to detect local OS version from /etc/redhat-release"))
+ 
+    elif check_dist() == "debian":
+       fd = open("/etc/debian_version")
+@@ -429,7 +429,7 @@ def connect_to_server(server=None,port=None):
+     if server is None:
+         server = os.environ.get("COBBLER_SERVER","")
+     if server == "":
+-        raise InfoException("--server must be specified")
++        raise(InfoException("--server must be specified"))
+ 
+     if port is None: 
+         port = 25151 
+@@ -445,7 +445,7 @@ def connect_to_server(server=None,port=None):
+         server = __try_connect(url)
+         if server is not None:
+            return server
+-    raise InfoException ("Could not find Cobbler.")
++    raise(InfoException ("Could not find Cobbler."))
+ 
+ def create_xendomains_symlink(name):
+     """
+@@ -459,7 +459,7 @@ def create_xendomains_symlink(name):
+     if os.path.exists(src) and os.access(os.path.dirname(dst), os.W_OK):
+         os.symlink(src, dst)
+     else:
+-        raise InfoException("Could not create /etc/xen/auto/%s symlink.  Please check write permissions and ownership" % name)
++        raise(InfoException("Could not create /etc/xen/auto/%s symlink.  Please check write permissions and ownership" % name))
+ 
+ def libvirt_enable_autostart(domain_name):
+    import libvirt
+@@ -469,10 +469,10 @@ def libvirt_enable_autostart(domain_name):
+       domain = conn.lookupByName(domain_name)
+       domain.setAutostart(1)
+    except:
+-      raise InfoException("libvirt could not find domain %s" % domain_name)
++      raise(InfoException("libvirt could not find domain %s" % domain_name))
+ 
+    if not domain.autostart:
+-      raise InfoException("Could not enable autostart on domain %s." % domain_name)
++      raise(InfoException("Could not enable autostart on domain %s." % domain_name))
+ 
+ def make_floppy(kickstart):
+ 
+@@ -484,14 +484,14 @@ def make_floppy(kickstart):
+     print("- %s" % cmd)
+     rc = os.system(cmd)
+     if not rc == 0:
+-        raise InfoException("dd failed")
++        raise(InfoException("dd failed"))
+ 
+     # vfatify
+     cmd = "mkdosfs %s" % floppy_path
+     print("- %s" % cmd)
+     rc = os.system(cmd)
+     if not rc == 0:
+-        raise InfoException("mkdosfs failed")
++        raise(InfoException("mkdosfs failed"))
+ 
+     # mount the floppy
+     mount_path = tempfile.mkdtemp(suffix=".mnt", prefix='tmp', dir="/tmp")
+@@ -499,7 +499,7 @@ def make_floppy(kickstart):
+     print("- %s" % cmd)
+     rc = os.system(cmd)
+     if not rc == 0:
+-        raise InfoException("mount failed")
++        raise(InfoException("mount failed"))
+ 
+     # download the kickstart file onto the mounted floppy
+     print("- downloading %s" % kickstart)
+@@ -511,7 +511,7 @@ def make_floppy(kickstart):
+     print("- %s" % cmd)
+     rc = os.system(cmd)
+     if not rc == 0:
+-        raise InfoException("umount failed")
++        raise(InfoException("umount failed"))
+ 
+     # return the path to the completed disk image to pass to virt-install
+     return floppy_path
+diff --git a/koan/virtinstall.py b/koan/virtinstall.py
+index de2a670..fbafb43 100644
+--- a/koan/virtinstall.py
++++ b/koan/virtinstall.py
+@@ -90,7 +90,7 @@ def _sanitize_disks(disks):
+         if d[1] != 0 or d[0].startswith("/dev"):
+             ret.append((d[0], d[1], driver_type))
+         else:
+-            raise app.InfoException("this virtualization type does not work without a disk image, set virt-size in Cobbler to non-zero")
++            raise(app.InfoException("this virtualization type does not work without a disk image, set virt-size in Cobbler to non-zero"))
+ 
+     return ret
+ 
+@@ -127,7 +127,7 @@ def _sanitize_nics(nics, bridge, profile_bridge, network_count):
+             intf_bridge = intf["virt_bridge"]
+             if intf_bridge == "":
+                 if profile_bridge == "":
+-                    raise app.InfoException("virt-bridge setting is not defined in cobbler")
++                    raise(app.InfoException("virt-bridge setting is not defined in cobbler"))
+                 intf_bridge = profile_bridge
+ 
+         else:
+@@ -230,12 +230,12 @@ def build_commandline(uri,
+     if is_import:
+         importpath = profile_data.get("file")
+         if not importpath:
+-            raise app.InfoException("Profile 'file' required for image "
+-                                     "install")
++            raise(app.InfoException("Profile 'file' required for image "
++                                     "install"))
+ 
+     elif "file" in profile_data:
+         if is_xen:
+-            raise app.InfoException("Xen does not work with --image yet")
++            raise(app.InfoException("Xen does not work with --image yet"))
+ 
+         # this is an image based installation
+         input_path = profile_data["file"]
+@@ -256,7 +256,7 @@ def build_commandline(uri,
+     elif is_qemu or is_xen:
+         # images don't need to source this
+         if not "install_tree" in profile_data:
+-            raise app.InfoException("Cannot find install source in kickstart file, aborting.")
++            raise(app.InfoException("Cannot find install source in kickstart file, aborting."))
+ 
+         if not profile_data["install_tree"].endswith("/"):
+             profile_data["install_tree"] = profile_data["install_tree"] + "/"
+@@ -277,7 +277,7 @@ def build_commandline(uri,
+             bridge = profile_data["virt_bridge"]
+ 
+         if bridge == "":
+-            raise app.InfoException("virt-bridge setting is not defined in cobbler")
++            raise(app.InfoException("virt-bridge setting is not defined in cobbler"))
+         nics = [(bridge, None)]
+ 
+ 
+diff --git a/koan/vmwcreate.py b/koan/vmwcreate.py
+index 1b90a27..3e94e1c 100755
+--- a/koan/vmwcreate.py
++++ b/koan/vmwcreate.py
+@@ -82,7 +82,7 @@ def make_disk(disksize,image):
+     print("- %s" % cmd)
+     rc = os.system(cmd)
+     if rc != 0:
+-       raise VirtCreateException("command failed")
++       raise(VirtCreateException("command failed"))
+ 
+ def make_vmx(path,vmdk_image,image_name,mac_address,memory):
+     template_params =  {
+@@ -101,7 +101,7 @@ def register_vmx(vmx_file):
+     print("- %s" % cmd)
+     rc = os.system(cmd)
+     if rc!=0:
+-       raise VirtCreateException("vmware registration failed")
++       raise(VirtCreateException("vmware registration failed"))
+     
+ def start_vm(vmx_file):
+     os.chmod(vmx_file, 0o755)
+@@ -109,7 +109,7 @@ def start_vm(vmx_file):
+     print("- %s" % cmd)
+     rc = os.system(cmd)
+     if rc != 0:
+-       raise VirtCreateException("vm start failed")
++       raise(VirtCreateException("vm start failed"))
+ 
+ def start_install(name=None, 
+                   ram=None, 
+@@ -127,7 +127,7 @@ def start_install(name=None,
+                   virt_auto_boot=False):
+ 
+     if "file" in profile_data:
+-        raise app.InfoException("vmware does not work with --image yet")
++        raise(app.InfoException("vmware does not work with --image yet"))
+ 
+     mac = None
+     if not "interfaces" in profile_data:
+@@ -154,7 +154,7 @@ def start_install(name=None,
+         os.makedirs(VMX_DIR)
+ 
+     if len(disks) != 1:
+-       raise VirtCreateException("vmware support is limited to 1 virtual disk")
++       raise(VirtCreateException("vmware support is limited to 1 virtual disk"))
+ 
+     diskname = disks[0][0]
+     disksize = disks[0][1]
+-- 
+2.5.5
+

@@ -1,0 +1,12 @@
+diff -ur cobbler-2.0.7.old/koan/app.py cobbler-2.0.7.new/koan/app.py
+--- cobbler-2.0.7.old/koan/app.py	2013-03-27 14:24:46.002915215 -0400
++++ cobbler-2.0.7.new/koan/app.py	2013-03-27 15:32:44.987651207 -0400
+@@ -1492,7 +1492,7 @@
+                         raise InfoException, "LVM creation failed"
+ 
+                 # partition location
+-                partition_location = "/dev/mapper/%s-%s" % (location,name.replace('-','--'))
++                partition_location = "/dev/%s/%s" % (location,name)
+ 
+                 # check whether we have SELinux enabled system
+                 args = "/usr/sbin/selinuxenabled"

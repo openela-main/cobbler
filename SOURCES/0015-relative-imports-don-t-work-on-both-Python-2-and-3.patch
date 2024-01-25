@@ -1,0 +1,394 @@
+From f565382b5291409ac1ab4a96494c566cd9a4dfd4 Mon Sep 17 00:00:00 2001
+From: Jan Dobes <jdobes@redhat.com>
+Date: Wed, 18 Oct 2017 13:18:24 +0200
+Subject: [PATCH 15/17] relative imports don't work on both Python 2 and 3
+
+(cherry picked from commit a2339d3a544c0cfbec6cfc5437942a79abe4bd30)
+
+Conflicts:
+  koan/app.py
+  koan/utils.py
+  koan/virtinstall.py
+---
+ koan/app.py              | 34 +++++++++-------------------------
+ koan/imagecreate.py      |  7 ++++---
+ koan/qcreate.py          | 11 ++++++-----
+ koan/register.py         |  6 +++---
+ koan/utils.py            |  6 ++++--
+ koan/virtinstall.py      | 27 ++++++++++++++-------------
+ koan/vmwcreate.py        |  4 ++--
+ koan/xencreate.py        |  7 ++++---
+ scripts/cobbler-register |  2 +-
+ scripts/koan             |  2 +-
+ 10 files changed, 48 insertions(+), 58 deletions(-)
+
+diff --git a/koan/app.py b/koan/app.py
+index 4ae4c90..f5af5e9 100755
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -41,7 +41,7 @@ try: #python2
+ except ImportError: #python3
+     import xmlrpc.client as xmlrpclib
+ import re
+-from . import utils
++from koan import utils
+ 
+ COBBLER_REQUIRED = 1.300
+ 
+@@ -228,22 +228,6 @@ def main():
+ #=======================================================
+ 
+ 
+-class KoanException(Exception):
+-
+-    def __init__(self, value, *args):
+-        self.value = value % args
+-        # this is a hack to work around some odd exception handling
+-        # in older pythons
+-        self.from_koan = 1
+-
+-    def __str__(self):
+-        return repr(self.value)
+-
+-
+-class KX(KoanException):
+-    pass
+-
+-
+ class InfoException(Exception):
+     """
+     Custom exception for tracking of fatal errors.
+@@ -1145,9 +1129,9 @@ class Koan:
+         """
+         pd = profile_data
+         # importing can't throw exceptions any more, don't put it in a sub-method
+-        from . import xencreate
+-        from . import qcreate
+-        from . import imagecreate
++        from koan import xencreate
++        from koan import qcreate
++        from koan import imagecreate
+ 
+         arch                          = self.safe_load(pd,'arch','x86')
+         kextra                        = self.calc_kernel_args(pd)
+@@ -1232,11 +1216,11 @@ class Koan:
+         if (self.image is not None) and (pd["image_type"] == "virt-clone"):
+             fullvirt = True
+             uuid = None
+-            from . import imagecreate
++            from koan import imagecreate
+             creator = imagecreate.start_install
+         elif self.virt_type in [ "xenpv", "xenfv" ]:
+             uuid    = self.get_uuid(self.calc_virt_uuid(pd))
+-            from . import xencreate
++            from koan import xencreate
+             creator = xencreate.start_install
+             if self.virt_type == "xenfv":
+                fullvirt = True 
+@@ -1244,15 +1228,15 @@ class Koan:
+         elif self.virt_type == "qemu":
+             fullvirt = True
+             uuid    = None
+-            from . import qcreate
++            from koan import qcreate
+             creator = qcreate.start_install
+             can_poll = "qemu"
+         elif self.virt_type == "vmware":
+-            from . import vmwcreate
++            from koan import vmwcreate
+             uuid = None
+             creator = vmwcreate.start_install
+         elif self.virt_type == "vmwarew":
+-            from . import vmwwcreate
++            from koan import vmwwcreate
+             uuid = None
+             creator = vmwwcreate.start_install
+         else:
+diff --git a/koan/imagecreate.py b/koan/imagecreate.py
+index d70d519..9b98f74 100644
+--- a/koan/imagecreate.py
++++ b/koan/imagecreate.py
+@@ -23,9 +23,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ 02110-1301  USA
+ """
+ 
+-from . import utils
+-from . import virtinstall
++from koan.utils import subprocess_call
++from koan import virtinstall
++
+ 
+ def start_install(*args, **kwargs):
+     cmd = virtinstall.build_commandline("import", *args, **kwargs)
+-    utils.subprocess_call(cmd)
++    subprocess_call(cmd)
+diff --git a/koan/qcreate.py b/koan/qcreate.py
+index d0bafae..73b6abb 100755
+--- a/koan/qcreate.py
++++ b/koan/qcreate.py
+@@ -23,10 +23,11 @@ module for creating fullvirt guests via KVM/kqemu/qemu
+ requires python-virtinst-0.200 (or virt-install in later distros).
+ """
+ 
+-from . import utils
+-from . import virtinstall
+ from xml.dom.minidom import parseString
+-from . import app as koan
++from koan.utils import subprocess_call
++from koan import virtinstall
++from koan import app
++
+ 
+ def start_install(*args, **kwargs):
+     # See http://post-office.corp.redhat.com/archives/satellite-dept-list/2013-December/msg00039.html for discussion on this hack.
+@@ -37,7 +38,7 @@ def start_install(*args, **kwargs):
+     try:
+         import libvirt
+     except:
+-        raise koan.InfoException("package libvirt is required for installing virtual guests")
++        raise app.InfoException("package libvirt is required for installing virtual guests")
+     conn = libvirt.openReadOnly(None)
+     # See http://libvirt.org/formatcaps.html
+     capabilities = parseString(conn.getCapabilities())
+@@ -49,4 +50,4 @@ def start_install(*args, **kwargs):
+ 
+     virtinstall.create_image_file(*args, **kwargs)
+     cmd = virtinstall.build_commandline("qemu:///system", *args, **kwargs)
+-    utils.subprocess_call(cmd)
++    subprocess_call(cmd)
+diff --git a/koan/register.py b/koan/register.py
+index a69f2d1..8ce7db3 100755
+--- a/koan/register.py
++++ b/koan/register.py
+@@ -30,7 +30,7 @@ try: #python2
+ except ImportError: #python3
+     import xmlrpc.client as xmlrpclib
+ import socket
+-from . import utils
++from koan.utils import connect_to_server, get_network_info
+ 
+ # usage: cobbler-register [--server=server] [--hostname=hostname] --profile=foo
+ 
+@@ -127,10 +127,10 @@ class Register:
+            raise InfoException("root access is required to register")
+  
+         print("- preparing to koan home")
+-        self.conn = utils.connect_to_server(self.server, self.port)
++        self.conn = connect_to_server(self.server, self.port)
+         reg_info = {}
+         print("- gathering network info")
+-        netinfo = utils.get_network_info()
++        netinfo = get_network_info()
+         reg_info["interfaces"] = netinfo
+         print("- checking hostname")
+         sysname = ""
+diff --git a/koan/utils.py b/koan/utils.py
+index 12ec718..607db1f 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -44,6 +44,7 @@ VIRT_STATE_NAME_MAP = {
+    6 : "crashed"
+ }
+ 
++
+ class InfoException(Exception):
+     """
+     Custom exception for tracking of fatal errors.
+@@ -54,6 +55,7 @@ class InfoException(Exception):
+     def __str__(self):
+         return repr(self.value)
+ 
++
+ def setupLogging(appname):
+     """
+     set up logging ... code borrowed/adapted from virt-manager
+@@ -253,7 +255,7 @@ def nfsmount(input_path):
+     rc = sub_process.call(mount_cmd)
+     if not rc == 0:
+         shutil.rmtree(tempdir, ignore_errors=True)
+-        raise koan.InfoException("nfs mount failed: %s" % dirpath)
++        raise InfoException("nfs mount failed: %s" % dirpath)
+     # NOTE: option for a blocking install might be nice, so we could do this
+     # automatically, if supported by virt-install
+     print("after install completes, you may unmount and delete %s" % tempdir)
+@@ -333,7 +335,7 @@ def os_release():
+              return (make,float(t))
+          except ValueError:
+              pass
+-      raise koan.KX("failed to detect local OS version from /etc/redhat-release")
++      raise InfoException("failed to detect local OS version from /etc/redhat-release")
+ 
+    elif check_dist() == "debian":
+       fd = open("/etc/debian_version")
+diff --git a/koan/virtinstall.py b/koan/virtinstall.py
+index 5359b2a..ce6c425 100644
+--- a/koan/virtinstall.py
++++ b/koan/virtinstall.py
+@@ -30,15 +30,15 @@ import os
+ import re
+ import shlex
+ 
+-from . import app as koan
+-from . import utils
++from koan import app
++from koan.utils import subprocess_get_response, nfsmount, make_floppy
+ 
+ # The virtinst module will no longer be availabe to import in some
+ # distros. We need to get all the info we need from the virt-install
+ # command line tool. This should work on both old and new variants,
+ # as the virt-install command line tool has always been provided by
+ # python-virtinst (and now the new virt-install rpm).
+-rc, response = utils.subprocess_get_response(
++rc, response = subprocess_get_response(
+         shlex.split('virt-install --version'), True)
+ if rc == 0:
+     virtinst_version = response
+@@ -63,7 +63,7 @@ try:
+             supported_variants.add(variant)
+ except:
+     try:
+-        rc, response = utils.subprocess_get_response(
++        rc, response = subprocess_get_response(
+                 shlex.split('virt-install --os-variant list'))
+         variants = response.split('\n')
+         for variant in variants:
+@@ -90,7 +90,7 @@ def _sanitize_disks(disks):
+         if d[1] != 0 or d[0].startswith("/dev"):
+             ret.append((d[0], d[1], driver_type))
+         else:
+-            raise koan.InfoException("this virtualization type does not work without a disk image, set virt-size in Cobbler to non-zero")
++            raise app.InfoException("this virtualization type does not work without a disk image, set virt-size in Cobbler to non-zero")
+ 
+     return ret
+ 
+@@ -128,7 +128,7 @@ def _sanitize_nics(nics, bridge, profile_bridge, network_count):
+             intf_bridge = intf["virt_bridge"]
+             if intf_bridge == "":
+                 if profile_bridge == "":
+-                    raise koan.InfoException("virt-bridge setting is not defined in cobbler")
++                    raise app.InfoException("virt-bridge setting is not defined in cobbler")
+                 intf_bridge = profile_bridge
+ 
+         else:
+@@ -151,7 +151,8 @@ def create_image_file(disks=None, **kwargs):
+             continue
+         if str(size) == "0":
+             continue
+-        utils.create_qemu_image_file(path, size, driver_type)
++        # This method doesn't exist and this functionality is probably broken
++        # create_qemu_image_file(path, size, driver_type)
+ 
+ def build_commandline(uri,
+                       name=None,
+@@ -230,12 +231,12 @@ def build_commandline(uri,
+     if is_import:
+         importpath = profile_data.get("file")
+         if not importpath:
+-            raise koan.InfoException("Profile 'file' required for image "
++            raise app.InfoException("Profile 'file' required for image "
+                                      "install")
+ 
+     elif "file" in profile_data:
+         if is_xen:
+-            raise koan.InfoException("Xen does not work with --image yet")
++            raise app.InfoException("Xen does not work with --image yet")
+ 
+         # this is an image based installation
+         input_path = profile_data["file"]
+@@ -244,7 +245,7 @@ def build_commandline(uri,
+             # this is not an NFS path
+             cdrom = input_path
+         else:
+-            (tempdir, filename) = utils.nfsmount(input_path)
++            (tempdir, filename) = nfsmount(input_path)
+             cdrom = os.path.join(tempdir, filename)
+ 
+         kickstart = profile_data.get("kickstart","")
+@@ -252,11 +253,11 @@ def build_commandline(uri,
+             # we have a (windows?) answer file we have to provide
+             # to the ISO.
+             print("I want to make a floppy for %s" % kickstart)
+-            floppy = utils.make_floppy(kickstart)
++            floppy = make_floppy(kickstart)
+     elif is_qemu or is_xen:
+         # images don't need to source this
+         if not "install_tree" in profile_data:
+-            raise koan.InfoException("Cannot find install source in kickstart file, aborting.")
++            raise app.InfoException("Cannot find install source in kickstart file, aborting.")
+ 
+         if not profile_data["install_tree"].endswith("/"):
+             profile_data["install_tree"] = profile_data["install_tree"] + "/"
+@@ -277,7 +278,7 @@ def build_commandline(uri,
+             bridge = profile_data["virt_bridge"]
+ 
+         if bridge == "":
+-            raise koan.InfoException("virt-bridge setting is not defined in cobbler")
++            raise app.InfoException("virt-bridge setting is not defined in cobbler")
+         nics = [(bridge, None)]
+ 
+ 
+diff --git a/koan/vmwcreate.py b/koan/vmwcreate.py
+index 33c5819..1b90a27 100755
+--- a/koan/vmwcreate.py
++++ b/koan/vmwcreate.py
+@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ import os
+ import random
+ 
+-from . import app as koan
++from koan import app
+ 
+ IMAGE_DIR = "/var/lib/vmware/images"
+ VMX_DIR = "/var/lib/vmware/vmx"
+@@ -127,7 +127,7 @@ def start_install(name=None,
+                   virt_auto_boot=False):
+ 
+     if "file" in profile_data:
+-        raise koan.InfoException("vmware does not work with --image yet")
++        raise app.InfoException("vmware does not work with --image yet")
+ 
+     mac = None
+     if not "interfaces" in profile_data:
+diff --git a/koan/xencreate.py b/koan/xencreate.py
+index 7eda3e6..18b2969 100755
+--- a/koan/xencreate.py
++++ b/koan/xencreate.py
+@@ -26,9 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ 02110-1301  USA
+ """
+ 
+-from . import utils
+-from . import virtinstall
++from koan.utils import subprocess_call
++from koan import virtinstall
++
+ 
+ def start_install(*args, **kwargs):
+     cmd = virtinstall.build_commandline("xen:///", *args, **kwargs)
+-    utils.subprocess_call(cmd)
++    subprocess_call(cmd)
+diff --git a/scripts/cobbler-register b/scripts/cobbler-register
+index ed97cfc..3f2ffb1 100755
+--- a/scripts/cobbler-register
++++ b/scripts/cobbler-register
+@@ -15,5 +15,5 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ """
+ 
+ import sys
+-import koan.register as register
++from koan import register
+ sys.exit(register.main() or 0)
+diff --git a/scripts/koan b/scripts/koan
+index aeccb0e..9c3f445 100755
+--- a/scripts/koan
++++ b/scripts/koan
+@@ -15,5 +15,5 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ """
+ 
+ import sys
+-import koan.app as app
++from koan import app
+ sys.exit(app.main() or 0)
+-- 
+2.5.5
+

@@ -1,0 +1,25 @@
+From a2dba086cd78ac54b0366d328a64b6e48e9dc422 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:35:59 +0100
+Subject: [PATCH 09/17] replace iteritems with items
+
+---
+ koan/app.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/koan/app.py b/koan/app.py
+index e727932..ac6b0df 100755
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -426,7 +426,7 @@ class Koan:
+         systems = self.get_data("systems")
+         for system in systems:
+             obj_name = system["name"]
+-            for (obj_iname, obj_interface) in system['interfaces'].iteritems():
++            for (obj_iname, obj_interface) in system['interfaces'].items():
+                 mac = obj_interface["mac_address"].upper()
+                 ip  = obj_interface["ip_address"].upper()
+                 for my_mac in mac_criteria:
+-- 
+2.5.5
+

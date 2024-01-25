@@ -1,0 +1,715 @@
+From d045ccd1730c6211252cd68cd69d387895df9641 Mon Sep 17 00:00:00 2001
+From: Tomas Kasparek <tkasparek@redhat.com>
+Date: Mon, 5 Mar 2018 11:15:58 +0100
+Subject: [PATCH 04/17] Python 3 compatible prints
+
+---
+ koan/app.py         | 106 ++++++++++++++++++++++++++--------------------------
+ koan/register.py    |  24 ++++++------
+ koan/utils.py       |  36 +++++++++---------
+ koan/virtinstall.py |  12 +++---
+ koan/vmwcreate.py   |  22 +++++------
+ 5 files changed, 100 insertions(+), 100 deletions(-)
+
+diff --git a/koan/app.py b/koan/app.py
+index e4e8a6d..ce8c8c3 100755
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -217,11 +217,11 @@ def main():
+         (xa, xb, tb) = sys.exc_info()
+         try:
+             getattr(e,"from_koan")
+-            print str(e)[1:-1] # nice exception, no traceback needed
++            print(str(e)[1:-1]) # nice exception, no traceback needed
+         except:
+-            print xa
+-            print xb
+-            print string.join(traceback.format_list(traceback.extract_tb(tb)))
++            print(xa)
++            print(xb)
++            print(string.join(traceback.format_list(traceback.extract_tb(tb))))
+         return 1
+ 
+     return 0
+@@ -307,9 +307,9 @@ class Koan:
+     
+         if not os.getuid() == 0:
+             if self.is_virt:
+-                print "warning: running as non root"
++                print("warning: running as non root")
+             else:
+-                print "this operation requires root access"
++                print("this operation requires root access")
+                 return 3
+         
+         # if both --profile and --system were ommitted, autodiscover
+@@ -372,20 +372,20 @@ class Koan:
+         try:
+             available_profiles = self.xmlrpc_server.get_profiles()
+         except:
+-            traceback.print_exc()
++            traceback.print(_exc())
+             self.connect_fail()
+ 
+-        print "\n- which profile to install?\n"
++        print("\n- which profile to install?\n")
+       
+         for x in available_profiles:
+-            print "%s" % x["name"]
++            print("%s" % x["name"])
+ 
+         sys.stdout.write("\n?>")
+ 
+         data = sys.stdin.readline().strip()
+  
+         for x in available_profiles:
+-            print "comp (%s,%s)" % (x["name"],data)
++            print("comp (%s,%s)" % (x["name"],data))
+             if x["name"] == data:
+                 return data
+         return None
+@@ -432,7 +432,7 @@ class Koan:
+             else:
+                 return None
+         elif len(detected_systems) == 1:
+-            print "- Auto detected: %s" % detected_systems[0]
++            print("- Auto detected: %s" % detected_systems[0])
+             return detected_systems[0]
+ 
+     #---------------------------------------------------
+@@ -509,7 +509,7 @@ class Koan:
+                     raise InfoException("xmlfile based installations are not supported")
+ 
+                 elif profile_data.has_key("file"):
+-                    print "- ISO or Image based installation, always uses --virt-type=qemu"
++                    print("- ISO or Image based installation, always uses --virt-type=qemu")
+                     self.virt_type = "qemu"
+                     
+                 else:
+@@ -525,7 +525,7 @@ class Koan:
+                         # assume Xen, we'll check to see if virt-type is really usable later.
+                         raise InfoException, "Not running a Xen kernel and qemu is not installed"
+ 
+-                print "- no virt-type specified, auto-selecting %s" % self.virt_type
++                print("- no virt-type specified, auto-selecting %s" % self.virt_type)
+ 
+             # now that we've figured out our virt-type, let's see if it is really usable
+             # rather than showing obscure error messages from Xen to the user :)
+@@ -628,9 +628,9 @@ class Koan:
+                         break
+ 
+             if self.safe_load(profile_data,"install_tree"):
+-                print "install_tree:", profile_data["install_tree"]
++                print("install_tree:", profile_data["install_tree"])
+             else:
+-                print "warning: kickstart found but no install_tree found"
++                print("warning: kickstart found but no install_tree found")
+                         
+         except:
+             # unstable to download the kickstart, however this might not
+@@ -646,7 +646,7 @@ class Koan:
+         data = self.get_data(what)
+         for x in data:
+             if x.has_key("name"):
+-                print x["name"]
++                print(x["name"])
+         return True
+ 
+     #---------------------------------------------------
+@@ -658,7 +658,7 @@ class Koan:
+                     value = profile_data[x]
+                     if x == 'kernel_options':
+                         value = self.calc_kernel_args(profile_data)
+-                    print "%20s  : %s" % (x, value)
++                    print("%20s  : %s" % (x, value))
+         return self.net_install(after_download)
+ 
+     #---------------------------------------------------
+@@ -702,9 +702,9 @@ class Koan:
+         template_files = utils.input_string_or_hash(template_files)
+         template_keys  = template_files.keys()
+ 
+-        print "- template map: %s" % template_files
++        print("- template map: %s" % template_files)
+ 
+-        print "- processing for files to download..."
++        print("- processing for files to download...")
+         for src in template_keys: 
+             dest = template_files[src]
+             save_as = dest
+@@ -713,7 +713,7 @@ class Koan:
+             if not save_as.startswith("/"):
+                 # this is a file in the template system that is not to be downloaded
+                 continue
+-            print "- file: %s" % save_as
++            print("- file: %s" % save_as)
+ 
+             pattern = "http://%s/cblr/svc/op/template/%s/%s/path/%s"
+             if profile_data.has_key("interfaces"):
+@@ -780,7 +780,7 @@ class Koan:
+                 '--command-line=%s' % (k_args,),
+                 self.safe_load(profile_data,'kernel_local')
+             ])
+-            print "Kernel loaded; run 'kexec -e' to execute"
++            print("Kernel loaded; run 'kexec -e' to execute")
+         return self.net_install(after_download)
+ 
+ 
+@@ -900,25 +900,25 @@ class Koan:
+             # Any post-grubby processing required (e.g. ybin, zipl, lilo)?
+             if arch.startswith("ppc") and "grub2" not in probe_output:
+                 # FIXME - CHRP hardware uses a 'PPC PReP Boot' partition and doesn't require running ybin
+-                print "- applying ybin changes"
++                print("- applying ybin changes")
+                 cmd = [ "/sbin/ybin" ]
+                 utils.subprocess_call(cmd)
+             elif arch.startswith("s390"):
+-                print "- applying zipl changes"
++                print("- applying zipl changes")
+                 cmd = [ "/sbin/zipl" ]
+                 utils.subprocess_call(cmd)
+             else:
+                 # if grubby --bootloader-probe returns lilo,
+                 #    apply lilo changes
+                 if boot_probe_ret_code == 0 and string.find(probe_output, "lilo") != -1:
+-                    print "- applying lilo changes"
++                    print("- applying lilo changes")
+                     cmd = [ "/sbin/lilo" ]
+                     utils.subprocess_call(cmd)
+ 
+             if not self.add_reinstall_entry:
+-                print "- reboot to apply changes"
++                print("- reboot to apply changes")
+             else:
+-                print "- reinstallation entry added"
++                print("- reinstallation entry added")
+ 
+         return self.net_install(after_download)
+ 
+@@ -986,7 +986,7 @@ class Koan:
+             else:
+                 data = getattr(self.xmlrpc_server, "get_%s_for_koan" % what)(name)
+         except:
+-            traceback.print_exc()
++            traceback.print(_exc())
+             self.connect_fail()
+         if data == {}:
+             raise InfoException("No entry/entries found")
+@@ -1049,15 +1049,15 @@ class Koan:
+                 initrd = "http://%s/cobbler/images/%s/%s" % (self.server, distro, initrd_short)
+ 
+         try:
+-            print "downloading initrd %s to %s" % (initrd_short, initrd_save)
+-            print "url=%s" % initrd
++            print("downloading initrd %s to %s" % (initrd_short, initrd_save))
++            print("url=%s" % initrd)
+             utils.urlgrab(initrd,initrd_save)
+ 
+-            print "downloading kernel %s to %s" % (kernel_short, kernel_save)
+-            print "url=%s" % kernel
++            print("downloading kernel %s to %s" % (kernel_short, kernel_save))
++            print("url=%s" % kernel)
+             utils.urlgrab(kernel,kernel_save)
+         except:
+-            traceback.print_exc()
++            traceback.print(_exc())
+             raise InfoException, "error downloading files"
+         profile_data['kernel_local'] = kernel_save
+         profile_data['initrd_local'] = initrd_save
+@@ -1166,11 +1166,11 @@ class Koan:
+                 noreboot          =  self.virtinstall_noreboot,
+         )
+ 
+-        print results
++        print(results)
+ 
+         if can_poll is not None and self.should_poll:
+             import libvirt
+-            print "- polling for virt completion"
++            print("- polling for virt completion")
+             conn = None
+             if can_poll == "xen":
+                conn = libvirt.open(None)
+@@ -1183,14 +1183,14 @@ class Koan:
+                time.sleep(3)
+                state = utils.get_vm_state(conn, virtname)
+                if state == "running":
+-                   print "- install is still running, sleeping for 1 minute (%s)" % ct
++                   print("- install is still running, sleeping for 1 minute (%s)" % ct)
+                    ct = ct + 1
+                    time.sleep(60)
+                elif state == "crashed":
+-                   print "- the install seems to have crashed."
++                   print("- the install seems to have crashed.")
+                    return "failed"
+                elif state == "shutdown":
+-                   print "- shutdown VM detected, is the install done?  Restarting!"
++                   print("- shutdown VM detected, is the install done?  Restarting!")
+                    utils.find_vm(conn, virtname).create()    
+                    return results
+                else:
+@@ -1202,7 +1202,7 @@ class Koan:
+             elif self.virt_type == "qemu":
+                utils.libvirt_enable_autostart(virtname)
+             else:
+-                print "- warning: don't know how to autoboot this virt type yet"
++                print("- warning: don't know how to autoboot this virt type yet")
+             # else...
+         return results
+ 
+@@ -1255,8 +1255,8 @@ class Koan:
+             disks.append([path,size])
+             counter = counter + 1
+         if len(disks) == 0:
+-            print "paths: ", paths
+-            print "sizes: ", sizes
++            print("paths: ", paths)
++            print("sizes: ", sizes)
+             raise InfoException, "Disk configuration not resolvable!"
+         return disks
+ 
+@@ -1320,7 +1320,7 @@ class Koan:
+         if size is None or size == '':
+             err = True
+         if err:
+-            print "invalid file size specified, using defaults"
++            print("invalid file size specified, using defaults")
+             return default_filesize
+         return int(size)
+ 
+@@ -1339,7 +1339,7 @@ class Koan:
+         if size is None or size == '' or int(size) < default_ram:
+             err = True
+         if err:
+-            print "invalid RAM size specified, using defaults."
++            print("invalid RAM size specified, using defaults.")
+             return default_ram
+         return int(size)
+ 
+@@ -1353,7 +1353,7 @@ class Koan:
+         try:
+             isize = int(size)
+         except:
+-            traceback.print_exc()
++            traceback.print(_exc())
+             return default_cpus
+         return isize
+ 
+@@ -1386,7 +1386,7 @@ class Koan:
+         if my_id is None or my_id == '' or not uuid_re.match(id):
+             err = True
+         if err and my_id is not None:
+-            print "invalid UUID specified.  randomizing..."
++            print("invalid UUID specified.  randomizing...")
+             return None
+         return my_id
+ 
+@@ -1415,7 +1415,7 @@ class Koan:
+            else:
+                prefix = "/var/lib/vmware/images/"
+            if not os.path.exists(prefix):
+-               print "- creating: %s" % prefix
++               print("- creating: %s" % prefix)
+                os.makedirs(prefix)
+            return [ "%s/%s-disk0" % (prefix, name) ]
+ 
+@@ -1456,7 +1456,7 @@ class Koan:
+             elif not os.path.exists(location) and os.path.isdir(os.path.dirname(location)):
+                 return location
+             elif not os.path.exists(os.path.dirname(location)):
+-                print "- creating: %s" % os.path.dirname(location)
++                print("- creating: %s" % os.path.dirname(location))
+                 os.makedirs(os.path.dirname(location))
+                 return location
+             else:
+@@ -1470,21 +1470,21 @@ class Koan:
+         else:
+             # it's a volume group, verify that it exists
+             args = "vgs -o vg_name"
+-            print "%s" % args
++            print("%s" % args)
+             vgnames = sub_process.Popen(args, shell=True, stdout=sub_process.PIPE).communicate()[0]
+-            print vgnames
++            print(vgnames)
+ 
+             if vgnames.find(location) == -1:
+                 raise InfoException, "The volume group [%s] does not exist." % location
+             
+             # check free space
+             args = "LANG=C vgs --noheadings -o vg_free --units g %s" % location
+-            print args
++            print(args)
+             cmd = sub_process.Popen(args, stdout=sub_process.PIPE, shell=True)
+             freespace_str = cmd.communicate()[0]
+             freespace_str = freespace_str.split("\n")[0].strip()
+             freespace_str = freespace_str.lower().replace("g","") # remove gigabytes
+-            print "(%s)" % freespace_str
++            print("(%s)" % freespace_str)
+             freespace = int(float(freespace_str))
+ 
+             virt_size = self.calc_virt_filesize(pd)
+@@ -1498,16 +1498,16 @@ class Koan:
+             
+                 # look for LVM partition named foo, create if doesn't exist
+                 args = "lvs -o lv_name %s" % location
+-                print "%s" % args
++                print("%s" % args)
+                 lvs_str=sub_process.Popen(args, stdout=sub_process.PIPE, shell=True).communicate()[0]
+-                print lvs_str
++                print(lvs_str)
+          
+                 name = "%s-disk%s" % (name,offset)
+  
+                 # have to create it?
+                 if lvs_str.find(name) == -1:
+                     args = "lvcreate -L %sG -n %s %s" % (virt_size, name, location)
+-                    print "%s" % args
++                    print("%s" % args)
+                     lv_create = sub_process.call(args, shell=True)
+                     if lv_create != 0:
+                         raise InfoException, "LVM creation failed"
+diff --git a/koan/register.py b/koan/register.py
+index cabd4a6..1157e5c 100755
+--- a/koan/register.py
++++ b/koan/register.py
+@@ -65,7 +65,7 @@ def main():
+ 
+     (options, args) = p.parse_args()
+     #if not os.getuid() == 0:
+-    #    print "koan requires root access"
++    #    print("koan requires root access")
+     #    return 3
+ 
+     try:
+@@ -80,11 +80,11 @@ def main():
+         (xa, xb, tb) = sys.exc_info()
+         try:
+             getattr(e,"from_koan")
+-            print str(e)[1:-1] # nice exception, no traceback needed
++            print(str(e)[1:-1]) # nice exception, no traceback needed
+         except:
+-            print xa
+-            print xb
+-            print string.join(traceback.format_list(traceback.extract_tb(tb)))
++            print(xa)
++            print(xb)
++            print(string.join(traceback.format_list(traceback.extract_tb(tb))))
+         return 1
+ 
+     return 0
+@@ -127,13 +127,13 @@ class Register:
+         if os.getuid() != 0:
+            raise InfoException("root access is required to register")
+  
+-        print "- preparing to koan home"
++        print("- preparing to koan home")
+         self.conn = utils.connect_to_server(self.server, self.port)
+         reg_info = {}
+-        print "- gathering network info"
++        print("- gathering network info")
+         netinfo = utils.get_network_info()
+         reg_info["interfaces"] = netinfo
+-        print "- checking hostname"
++        print("- checking hostname")
+         sysname = ""
+         if self.hostname != "" and self.hostname != "*AUTO*":
+             hostname = self.hostname
+@@ -171,14 +171,14 @@ class Register:
+ 
+         if not self.batch:
+             self.conn.register_new_system(reg_info)
+-            print "- registration successful, new system name: %s" % sysname
++            print("- registration successful, new system name: %s" % sysname)
+         else:
+             try:
+                 self.conn.register_new_system(reg_info)
+-                print "- registration successful, new system name: %s" % sysname
++                print("- registration successful, new system name: %s" % sysname)
+             except:
+-                traceback.print_exc()
+-                print "- registration failed, ignoring because of --batch"
++                traceback.print(_exc())
++                print("- registration failed, ignoring because of --batch")
+ 
+         return
+    
+diff --git a/koan/utils.py b/koan/utils.py
+index b8247e2..77d53b2 100644
+--- a/koan/utils.py
++++ b/koan/utils.py
+@@ -90,7 +90,7 @@ def urlread(url):
+     parts of urlread and urlgrab from urlgrabber, in ways that
+     are less cool and less efficient.
+     """
+-    print "- reading URL: %s" % url
++    print("- reading URL: %s" % url)
+     if url is None or url == "":
+         raise InfoException, "invalid URL: %s" % url
+ 
+@@ -109,7 +109,7 @@ def urlread(url):
+             subprocess_call(cmd)
+             return data
+         except:
+-            traceback.print_exc()
++            traceback.print(_exc())
+             raise InfoException, "Couldn't mount and read URL: %s" % url
+           
+     elif url[0:4] == "http":
+@@ -119,7 +119,7 @@ def urlread(url):
+             fd.close()
+             return data
+         except:
+-            traceback.print_exc()
++            traceback.print(_exc())
+             raise InfoException, "Couldn't download: %s" % url
+     elif url[0:4] == "file":
+         try:
+@@ -147,7 +147,7 @@ def subprocess_call(cmd,ignore_rc=0):
+     """
+     Wrapper around subprocess.call(...)
+     """
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = sub_process.call(cmd)
+     if rc != 0 and not ignore_rc:
+         raise InfoException, "command failed (%s)" % rc
+@@ -157,7 +157,7 @@ def subprocess_get_response(cmd, ignore_rc=False):
+     """
+     Wrapper around subprocess.check_output(...)
+     """
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = 0
+     result = ""
+     p = sub_process.Popen(cmd, stdout=sub_process.PIPE, stderr=sub_process.STDOUT)
+@@ -219,7 +219,7 @@ def input_string_or_hash(options,delim=None,allow_multiples=True):
+ 
+ def hash_to_string(hash):
+     """
+-    Convert a hash to a printable string.
++    Convert a hash to a print(able string.)
+     used primarily in the kernel options string
+     and for some legacy stuff where koan expects strings
+     (though this last part should be changed to hashes)
+@@ -232,7 +232,7 @@ def hash_to_string(hash):
+        if value is None:
+            buffer = buffer + str(key) + " "
+        elif type(value) == list:
+-           # this value is an array, so we print out every
++           # this value is an array, so we print(out every)
+            # key=value
+            for item in value:
+               buffer = buffer + str(key) + "=" + str(item) + " "
+@@ -251,14 +251,14 @@ def nfsmount(input_path):
+     mount_cmd = [
+          "/bin/mount", "-t", "nfs", "-o", "ro", dirpath, tempdir
+     ]
+-    print "- running: %s" % mount_cmd
++    print("- running: %s" % mount_cmd)
+     rc = sub_process.call(mount_cmd)
+     if not rc == 0:
+         shutil.rmtree(tempdir, ignore_errors=True)
+         raise koan.InfoException("nfs mount failed: %s" % dirpath)
+     # NOTE: option for a blocking install might be nice, so we could do this
+     # automatically, if supported by virt-install
+-    print "after install completes, you may unmount and delete %s" % tempdir
++    print("after install completes, you may unmount and delete %s" % tempdir)
+     return (tempdir, filename)
+ 
+ 
+@@ -411,7 +411,7 @@ def get_network_info():
+          "module"      : module
+       }
+ 
+-   # print interfaces
++   # print(interfaces)
+    return interfaces
+ 
+ def connect_to_server(server=None,port=None):
+@@ -431,7 +431,7 @@ def connect_to_server(server=None,port=None):
+         "https://%s/cobbler_api" % (server),
+     ]
+     for url in try_urls:
+-        print "- looking for Cobbler at %s" % url
++        print("- looking for Cobbler at %s" % url)
+         server = __try_connect(url)
+         if server is not None:
+            return server
+@@ -467,18 +467,18 @@ def libvirt_enable_autostart(domain_name):
+ def make_floppy(kickstart):
+ 
+     (fd, floppy_path) = tempfile.mkstemp(suffix='.floppy', prefix='tmp', dir="/tmp")
+-    print "- creating floppy image at %s" % floppy_path
++    print("- creating floppy image at %s" % floppy_path)
+ 
+     # create the floppy image file
+     cmd = "dd if=/dev/zero of=%s bs=1440 count=1024" % floppy_path
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = os.system(cmd)
+     if not rc == 0:
+         raise InfoException("dd failed")
+ 
+     # vfatify
+     cmd = "mkdosfs %s" % floppy_path
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = os.system(cmd)
+     if not rc == 0:
+         raise InfoException("mkdosfs failed")
+@@ -486,19 +486,19 @@ def make_floppy(kickstart):
+     # mount the floppy
+     mount_path = tempfile.mkdtemp(suffix=".mnt", prefix='tmp', dir="/tmp")
+     cmd = "mount -o loop -t vfat %s %s" % (floppy_path, mount_path)
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = os.system(cmd)
+     if not rc == 0:
+         raise InfoException("mount failed")
+ 
+     # download the kickstart file onto the mounted floppy
+-    print "- downloading %s" % kickstart
++    print("- downloading %s" % kickstart)
+     save_file = os.path.join(mount_path, "unattended.txt")
+     urlgrabber.urlgrab(kickstart,filename=save_file)
+ 
+     # umount    
+     cmd = "umount %s" % mount_path
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = os.system(cmd)
+     if not rc == 0:
+         raise InfoException("umount failed")
+@@ -522,7 +522,7 @@ def __try_connect(url):
+         xmlrpc_server.ping()
+         return xmlrpc_server
+     except:
+-        traceback.print_exc()
++        traceback.print(_exc())
+         return None
+ 
+ 
+diff --git a/koan/virtinstall.py b/koan/virtinstall.py
+index ca11e04..2d1f3df 100644
+--- a/koan/virtinstall.py
++++ b/koan/virtinstall.py
+@@ -191,7 +191,7 @@ def build_commandline(uri,
+     oldstyle_accelerate = False
+ 
+     if not virtinst_version:
+-        print ("- warning: old virt-install detected, a lot of features will be disabled")
++        print(("- warning: old virt-install detected, a lot of features will be disabled"))
+         disable_autostart = True
+         disable_boot_opt = True
+         disable_virt_type = True
+@@ -239,7 +239,7 @@ def build_commandline(uri,
+ 
+         # this is an image based installation
+         input_path = profile_data["file"]
+-        print "- using image location %s" % input_path
++        print("- using image location %s" % input_path)
+         if input_path.find(":") == -1:
+             # this is not an NFS path
+             cdrom = input_path
+@@ -251,7 +251,7 @@ def build_commandline(uri,
+         if kickstart != "":
+             # we have a (windows?) answer file we have to provide
+             # to the ISO.
+-            print "I want to make a floppy for %s" % kickstart
++            print("I want to make a floppy for %s" % kickstart)
+             floppy = utils.make_floppy(kickstart)
+     elif is_qemu or is_xen:
+         # images don't need to source this
+@@ -378,7 +378,7 @@ def build_commandline(uri,
+                 # compatibility in virt-install grumble grumble.
+                 cmd += "--os-variant %s" % os_version + ".0 "
+             else:
+-                print ("- warning: virt-install doesn't know this os_version, defaulting to generic26")
++                print(("- warning: virt-install doesn't know this os_version, defaulting to generic26"))
+                 cmd += "--os-variant generic26 "
+         else:
+             distro = "unix"
+@@ -394,8 +394,8 @@ def build_commandline(uri,
+         cmd += "--disk path=%s " % importpath
+ 
+     for path, size, driver_type in disks:
+-        print ("- adding disk: %s of size %s (driver type=%s)" %
+-               (path, size, driver_type))
++        print(("- adding disk: %s of size %s (driver type=%s)" %
++               (path, size, driver_type)))
+         cmd += "--disk path=%s" % (path)
+         if str(size) != "0":
+             cmd += ",size=%s" % size
+diff --git a/koan/vmwcreate.py b/koan/vmwcreate.py
+index 372173a..97e0ba2 100755
+--- a/koan/vmwcreate.py
++++ b/koan/vmwcreate.py
+@@ -77,7 +77,7 @@ def random_mac():
+ 
+ def make_disk(disksize,image):
+     cmd = "vmware-vdiskmanager -c -a lsilogic -s %sGb -t 0 %s" % (disksize, image)
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = os.system(cmd)
+     if rc != 0:
+        raise VirtCreateException("command failed")
+@@ -96,7 +96,7 @@ def make_vmx(path,vmdk_image,image_name,mac_address,memory):
+ 
+ def register_vmx(vmx_file):
+     cmd = "vmware-cmd -s register %s" % vmx_file
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = os.system(cmd)
+     if rc!=0:
+        raise VirtCreateException("vmware registration failed")
+@@ -104,7 +104,7 @@ def register_vmx(vmx_file):
+ def start_vm(vmx_file):
+     os.chmod(vmx_file,0755)
+     cmd = "vmware-cmd %s start" % vmx_file
+-    print "- %s" % cmd
++    print("- %s" % cmd)
+     rc = os.system(cmd)
+     if rc != 0:
+        raise VirtCreateException("vm start failed")
+@@ -129,19 +129,19 @@ def start_install(name=None,
+ 
+     mac = None
+     if not profile_data.has_key("interfaces"):
+-        print "- vmware installation requires a system, not a profile"
++        print("- vmware installation requires a system, not a profile")
+         return 1
+     for iname in profile_data["interfaces"]:
+         intf = profile_data["interfaces"][iname]
+         mac = intf["mac_address"]
+     if mac is None:
+-        print "- no MAC information available in this record, cannot install"
++        print("- no MAC information available in this record, cannot install")
+         return 1
+ 
+-    print "DEBUG: name=%s" % name
+-    print "DEBUG: ram=%s" % ram
+-    print "DEBUG: mac=%s" % mac
+-    print "DEBUG: disks=%s" % disks
++    print("DEBUG: name=%s" % name)
++    print("DEBUG: ram=%s" % ram)
++    print("DEBUG: mac=%s" % mac)
++    print("DEBUG: disks=%s" % disks)
+     # starts vmware using PXE.  disk/mem info come from Cobbler
+     # rest of the data comes from PXE which is also intended
+     # to be managed by Cobbler.
+@@ -158,10 +158,10 @@ def start_install(name=None,
+     disksize = disks[0][1]
+ 
+     image = "%s/%s" % (IMAGE_DIR, name)
+-    print "- saving virt disk image as %s" % image
++    print("- saving virt disk image as %s" % image)
+     make_disk(disksize,image)
+     vmx = "%s/%s" % (VMX_DIR, name)
+-    print "- saving vmx file as %s" % vmx
++    print("- saving vmx file as %s" % vmx)
+     make_vmx(vmx,image,name,mac,ram)
+     register_vmx(vmx)
+     start_vm(vmx)
+-- 
+2.5.5
+

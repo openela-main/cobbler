@@ -1,0 +1,17 @@
+--- scripts/cobblerd.orig	2013-06-18 14:12:00.328726666 +0200
++++ scripts/cobblerd	2013-06-18 14:12:19.784627599 +0200
+@@ -50,10 +50,10 @@
+         print >>sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror) 
+         sys.exit(1) 
+ 
+-    #dev_null = file('/dev/null','rw') 
+-    #os.dup2(dev_null.fileno(), sys.stdin.fileno()) 
+-    #os.dup2(dev_null.fileno(), sys.stdout.fileno()) 
+-    #os.dup2(dev_null.fileno(), sys.stderr.fileno()) 
++    dev_null = file('/dev/null','rw') 
++    os.dup2(dev_null.fileno(), sys.stdin.fileno()) 
++    os.dup2(dev_null.fileno(), sys.stdout.fileno()) 
++    os.dup2(dev_null.fileno(), sys.stderr.fileno()) 
+ 
+ def main():
+     op = optparse.OptionParser()

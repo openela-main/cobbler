@@ -1,0 +1,21 @@
+--- a/koan/app.py
++++ b/koan/app.py
+@@ -727,7 +727,7 @@ class Koan:
+ 
+             (make, version) = utils.os_release()
+ 
+-            if (make == "centos" and version < 6) or (make == "redhat" and version < 6) or (make == "fedora" and version < 10):
++            if (make == "centos" and version < 8) or (make == "redhat" and version < 8) or (make == "fedora" and version < 10):
+ 
+                 # embed the initrd in the kickstart file because of libdhcp and/or pump
+                 # needing the help due to some DHCP timeout potential in some certain
+@@ -808,7 +808,7 @@ class Koan:
+ 
+             (make, version) = utils.os_release()
+ 
+-            if (make == "centos" and version < 6) or (make == "redhat" and version < 7) or (make == "fedora" and version < 10):
++            if (make == "centos" and version < 8) or (make == "redhat" and version < 8) or (make == "fedora" and version < 10):
+ 
+                 # embed the initrd in the kickstart file because of libdhcp and/or pump
+                 # needing the help due to some DHCP timeout potential in some certain
+
